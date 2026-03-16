@@ -13,7 +13,8 @@ const item = {
 };
 
 export default function ScenarioSimulator() {
-  const { funnelCalc, productCalc, mainProduct } = useOperation();
+  const { funnelCalc, productCalc, state } = useOperation();
+  const mainProduct = state.product;
 
   const [targetProfitPerSale, setTargetProfitPerSale] = useState(50);
   const [assumedCpa, setAssumedCpa] = useState(25);

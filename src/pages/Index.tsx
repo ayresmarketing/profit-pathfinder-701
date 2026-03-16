@@ -31,15 +31,15 @@ export default function Index() {
     <OperationProvider>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="border-b border-border px-4 md:px-8 py-4">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <header className="bg-card border-b border-border px-4 md:px-8 py-4">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center animate-neon-pulse">
-                <span className="text-primary-foreground font-display font-bold text-sm">AP</span>
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">AP</span>
               </div>
               <div>
-                <h1 className="font-display text-sm font-bold tracking-wider text-foreground">ANTI-PREJUÍZO</h1>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">Terminal de Inteligência Financeira</p>
+                <h1 className="text-sm font-bold tracking-tight text-foreground">ANTI-PREJUÍZO</h1>
+                <p className="text-[11px] text-muted-foreground">Terminal de Inteligência Financeira</p>
               </div>
             </div>
             <div className="hidden md:flex items-center gap-3">
@@ -50,8 +50,8 @@ export default function Index() {
         </header>
 
         {/* Tab Navigation */}
-        <nav className="border-b border-border px-4 md:px-8 overflow-x-auto">
-          <div className="max-w-6xl mx-auto flex gap-0">
+        <nav className="bg-card border-b border-border px-4 md:px-8">
+          <div className="max-w-5xl mx-auto flex gap-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -71,7 +71,6 @@ export default function Index() {
                     <motion.div
                       layoutId="tab-indicator"
                       className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"
-                      style={{ boxShadow: '0 0 12px hsl(var(--primary))' }}
                     />
                   )}
                 </button>
@@ -81,7 +80,7 @@ export default function Index() {
         </nav>
 
         {/* Content */}
-        <main className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+        <main className="max-w-5xl mx-auto px-4 md:px-8 py-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

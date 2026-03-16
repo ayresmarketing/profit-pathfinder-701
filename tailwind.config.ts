@@ -16,7 +16,6 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
-        display: ['Orbitron', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -56,12 +55,6 @@ export default {
         amber: "hsl(var(--amber))",
         rose: "hsl(var(--rose))",
         electric: "hsl(var(--electric))",
-        neon: {
-          cyan: "hsl(var(--neon-cyan))",
-          green: "hsl(var(--neon-green))",
-          purple: "hsl(var(--neon-purple))",
-          yellow: "hsl(var(--neon-yellow))",
-        },
         surface: {
           DEFAULT: "hsl(var(--surface))",
           raised: "hsl(var(--surface-raised))",
@@ -92,20 +85,10 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "pulse-danger": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.7" },
-        },
-        "neon-pulse": {
-          "0%, 100%": { boxShadow: "0 0 5px hsl(var(--neon-cyan) / 0.3)" },
-          "50%": { boxShadow: "0 0 20px hsl(var(--neon-cyan) / 0.6)" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-danger": "pulse-danger 2s ease-in-out infinite",
-        "neon-pulse": "neon-pulse 3s ease-in-out infinite",
       },
     },
   },

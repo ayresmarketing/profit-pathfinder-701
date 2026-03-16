@@ -3,7 +3,7 @@ import { formatBRL, formatPercent, formatNumber, getHealthStatus } from '@/lib/c
 import MetricCard from '@/components/shared/MetricCard';
 import ProfitabilityGauge from './ProfitabilityGauge';
 import { motion } from 'framer-motion';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, Tooltip as RTooltip, PieChart, Pie } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, Tooltip as RTooltip } from 'recharts';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -18,9 +18,8 @@ export default function HealthDashboard() {
   const { state, productCalc, funnelCalc, cpaProjection } = useOperation();
 
   const healthProduct = getHealthStatus(cpaProjection.projectedCPA, funnelCalc.healthZonesProduct);
-  const healthFunnel = getHealthStatus(cpaProjection.projectedCPA, funnelCalc.healthZonesFunnel);
   const signalMap = { healthy: 'safe' as const, moderate: 'warning' as const, aggressive: 'warning' as const, danger: 'danger' as const };
-  const statusLabels = { healthy: 'Cenário Viável', moderate: 'Risco Moderado', aggressive: 'Risco de Escala', danger: 'Margem Crítica' };
+  const statusLabels = { healthy: '✅ Cenário Viável', moderate: '⚠️ Risco Moderado', aggressive: '🟠 Risco de Escala', danger: '🚨 Margem Crítica' };
 
   const margin = funnelCalc.totalGrossRevenue > 0
     ? ((funnelCalc.totalNetRevenue) / funnelCalc.totalGrossRevenue) * 100
@@ -29,48 +28,45 @@ export default function HealthDashboard() {
   const delta = funnelCalc.cpaMaxProduct - cpaProjection.projectedCPA;
   const isDanger = delta < 0;
 
-  // Revenue composition data
   const revenueData = [
     { name: 'Principal', value: productCalc.grossRevenue, net: productCalc.netRevenue },
     ...state.offers.map((o, i) => ({
-      name: o.name.slice(0, 15),
+      name: o.name.slice(0, 12),
       value: funnelCalc.offerResults[i]?.grossRevenue || 0,
       net: funnelCalc.offerResults[i]?.netRevenue || 0,
     })),
   ];
 
-  // Cost waterfall
   const waterfallData = [
-    { name: 'Preço Bruto', value: state.product.price, color: 'hsl(var(--foreground))' },
+    { name: 'Bruto', value: state.product.price, color: 'hsl(var(--foreground))' },
     { name: 'Impostos', value: -productCalc.taxPerSale, color: 'hsl(var(--amber))' },
     { name: 'Plataforma', value: -productCalc.platformFeePerSale, color: 'hsl(var(--electric))' },
     { name: 'Comissão', value: -(productCalc.commissionPerSale + state.product.otherFixedCosts), color: 'hsl(var(--rose))' },
     { name: 'Líquido', value: productCalc.netValuePerSale, color: 'hsl(var(--emerald))' },
   ];
 
-  // Health zones for product
   const zones = funnelCalc.healthZonesProduct;
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item}>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">Dashboard de Saúde</h2>
-        <p className="text-sm text-muted-foreground">Visão executiva da operação.</p>
+        <h2 className="font-display text-base font-bold tracking-wider text-foreground">DASHBOARD</h2>
+        <p className="text-sm text-muted-foreground mt-1">Visão geral da saúde da sua operação. Todos os dados são calculados automaticamente.</p>
       </motion.div>
 
       {/* Status header */}
-      <motion.div variants={item} className={`glass-card p-5 ${isDanger ? 'bg-signal-danger' : 'bg-signal-safe'}`}>
+      <motion.div variants={item} className={`neon-card ${isDanger ? 'bg-signal-danger' : 'bg-signal-safe'}`}>
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="flex-1 text-center md:text-left">
-            <p className={`text-xl font-bold tracking-tight ${isDanger ? 'signal-danger' : 'signal-safe'}`}>
+            <p className={`font-display text-lg font-bold tracking-wider ${isDanger ? 'signal-danger' : 'signal-safe'}`}>
               {statusLabels[healthProduct]}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-2">
               Seu CPA máximo é <strong className="text-foreground">{formatBRL(funnelCalc.cpaMaxProduct)}</strong>.
-              {' '}Com o CPM atual de <strong className="text-foreground">{formatBRL(state.traffic.cpm)}</strong>,
-              {' '}você precisa de <strong className="text-foreground">{formatPercent(
+              {' '}Com o CPM de <strong className="text-foreground">{formatBRL(state.traffic.cpm)}</strong>,
+              {' '}você precisa de pelo menos <strong className="text-foreground">{formatPercent(
                 ((cpaProjection.purchases / cpaProjection.pageViews) * 100) || 0
-              )}</strong> de conversão para manter o lucro.
+              )}</strong> de conversão para manter lucro.
             </p>
           </div>
           <div className="w-48 shrink-0">
@@ -89,38 +85,38 @@ export default function HealthDashboard() {
 
       <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <MetricCard label="CPA Máximo" value={formatBRL(funnelCalc.cpaMaxProduct)} signal="primary"
-          tooltip="Valor limite para manter margem positiva" />
+          tooltip="Limite máximo de custo por venda" />
         <MetricCard label="CPA Projetado" value={formatBRL(cpaProjection.projectedCPA)} signal={signalMap[healthProduct]}
-          tooltip="CPA estimado com métricas de tráfego atuais" />
+          tooltip="CPA estimado com as métricas de tráfego atuais" />
         <MetricCard label="Margem" value={formatPercent(margin)} signal={margin > 30 ? 'safe' : margin > 15 ? 'warning' : 'danger'} />
         <MetricCard label="Break-even" value={`${funnelCalc.breakEvenSales} vendas`}
-          tooltip="Ponto de equilíbrio considerando investimento em tráfego" />
+          tooltip="Vendas necessárias para cobrir o investimento em tráfego" />
       </motion.div>
 
       {/* Health zones */}
       <motion.div variants={item} className="glass-card p-5 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Zonas de Saúde (Produto Principal)</h3>
+        <h3 className="section-title">🎯 Zonas de Saúde</h3>
+        <p className="text-xs text-muted-foreground mb-2">Mostra em qual faixa de risco seu CPA projetado se encontra.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <HealthZone emoji="🟢" label="Saudável" range={`${formatBRL(zones.healthy[0])} – ${formatBRL(zones.healthy[1])}`} active={healthProduct === 'healthy'} />
-          <HealthZone emoji="🟡" label="Moderado" range={`${formatBRL(zones.moderate[0])} – ${formatBRL(zones.moderate[1])}`} active={healthProduct === 'moderate'} />
-          <HealthZone emoji="🟠" label="Agressivo" range={`${formatBRL(zones.aggressive[0])} – ${formatBRL(zones.aggressive[1])}`} active={healthProduct === 'aggressive'} />
-          <HealthZone emoji="🔴" label="Zona de risco" range={`Acima de ${formatBRL(zones.dangerAbove)}`} active={healthProduct === 'danger'} />
+          <HealthZone emoji="🟢" label="Saudável" range={`${formatBRL(zones.healthy[0])} – ${formatBRL(zones.healthy[1])}`} active={healthProduct === 'healthy'} desc="Margem confortável" />
+          <HealthZone emoji="🟡" label="Moderado" range={`${formatBRL(zones.moderate[0])} – ${formatBRL(zones.moderate[1])}`} active={healthProduct === 'moderate'} desc="Margem apertada" />
+          <HealthZone emoji="🟠" label="Agressivo" range={`${formatBRL(zones.aggressive[0])} – ${formatBRL(zones.aggressive[1])}`} active={healthProduct === 'aggressive'} desc="Risco ao escalar" />
+          <HealthZone emoji="🔴" label="Risco" range={`Acima de ${formatBRL(zones.dangerAbove)}`} active={healthProduct === 'danger'} desc="Provável prejuízo" />
         </div>
       </motion.div>
 
-      {/* Charts row */}
+      {/* Charts */}
       <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Revenue composition */}
         <div className="glass-card p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Composição de Receita</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Composição de Receita</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueData} barSize={24}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(220, 8%, 52%)' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(220, 8%, 52%)' }} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(220, 10%, 48%)' }} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(220, 10%, 48%)' }} />
               <RTooltip
-                contentStyle={{ background: 'hsl(240, 6%, 8%)', border: '1px solid hsl(0, 0%, 100%, 0.08)', borderRadius: 8 }}
-                labelStyle={{ color: 'hsl(220, 10%, 92%)' }}
+                contentStyle={{ background: 'hsl(220, 18%, 9%)', border: '1px solid hsl(180, 20%, 20%)', borderRadius: 8 }}
+                labelStyle={{ color: 'hsl(180, 10%, 92%)' }}
                 formatter={(v: number) => formatBRL(v)}
               />
               <Bar dataKey="value" name="Bruto" radius={[4, 4, 0, 0]}>
@@ -137,16 +133,15 @@ export default function HealthDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Cost waterfall */}
         <div className="glass-card p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Waterfall de Custos (por venda)</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Waterfall de Custos (por venda)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={waterfallData} barSize={28}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(220, 8%, 52%)' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(220, 8%, 52%)' }} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(220, 10%, 48%)' }} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(220, 10%, 48%)' }} />
               <RTooltip
-                contentStyle={{ background: 'hsl(240, 6%, 8%)', border: '1px solid hsl(0, 0%, 100%, 0.08)', borderRadius: 8 }}
+                contentStyle={{ background: 'hsl(220, 18%, 9%)', border: '1px solid hsl(180, 20%, 20%)', borderRadius: 8 }}
                 formatter={(v: number) => formatBRL(Math.abs(v))}
               />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -161,16 +156,16 @@ export default function HealthDashboard() {
 
       {/* CPA comparison */}
       <motion.div variants={item} className="glass-card p-5">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">CPA Máximo vs CPA Projetado</h3>
-        <div className="flex items-end gap-4 h-32">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">CPA Máximo vs CPA Projetado</h3>
+        <div className="flex items-end gap-6 h-32">
           <div className="flex-1 flex flex-col items-center gap-1">
             <motion.div
-              className="w-full rounded-t bg-electric"
+              className="w-full rounded-t bg-primary"
               initial={{ height: 0 }}
               animate={{ height: `${(funnelCalc.cpaMaxProduct / Math.max(funnelCalc.cpaMaxProduct, cpaProjection.projectedCPA)) * 100}%` }}
               transition={{ duration: 0.6 }}
             />
-            <span className="text-xs font-mono text-electric">{formatBRL(funnelCalc.cpaMaxProduct)}</span>
+            <span className="text-xs font-mono text-primary">{formatBRL(funnelCalc.cpaMaxProduct)}</span>
             <span className="text-[10px] text-muted-foreground">CPA Máx.</span>
           </div>
           <div className="flex-1 flex flex-col items-center gap-1">
@@ -189,12 +184,13 @@ export default function HealthDashboard() {
   );
 }
 
-function HealthZone({ emoji, label, range, active }: { emoji: string; label: string; range: string; active: boolean }) {
+function HealthZone({ emoji, label, range, active, desc }: { emoji: string; label: string; range: string; active: boolean; desc: string }) {
   return (
     <div className={`p-3 rounded-lg text-center transition-all ${active ? 'glass-card ring-1 ring-primary scale-105' : 'bg-muted/30'}`}>
       <span className="text-lg">{emoji}</span>
       <p className={`text-xs font-semibold mt-1 ${active ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</p>
       <p className="text-[10px] font-mono text-muted-foreground">{range}</p>
+      <p className="text-[9px] text-muted-foreground mt-0.5">{desc}</p>
     </div>
   );
 }

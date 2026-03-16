@@ -13,21 +13,25 @@ interface InputFieldProps {
   min?: number;
   max?: number;
   disabled?: boolean;
+  highlight?: boolean;
 }
 
 export default function InputField({
   label, value, onChange, tooltip, prefix, suffix,
-  step = 0.01, min = 0, max, disabled
+  step = 0.01, min = 0, max, disabled, highlight
 }: InputFieldProps) {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseFloat(e.target.value);
     if (!isNaN(v)) onChange(v);
   }, [onChange]);
 
+  const inputClass = highlight ? 'user-input' : 'precision-input';
+
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5">
         <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</label>
+        {highlight && <span className="text-[8px] text-neon-yellow">✏️</span>}
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -51,7 +55,7 @@ export default function InputField({
           min={min}
           max={max}
           disabled={disabled}
-          className={`precision-input w-full text-foreground ${prefix ? 'pl-9' : ''} ${suffix ? 'pr-8' : ''}`}
+          className={`${inputClass} w-full text-foreground ${prefix ? 'pl-9' : ''} ${suffix ? 'pr-8' : ''}`}
         />
         {suffix && (
           <span className="absolute right-3 text-xs text-muted-foreground font-mono">{suffix}</span>

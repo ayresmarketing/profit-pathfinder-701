@@ -22,15 +22,15 @@ const signalClasses = {
 export default function MetricCard({ label, value, tooltip, signal = 'neutral', subtitle, compact }: MetricCardProps) {
   return (
     <div className={`glass-card ${compact ? 'p-3' : 'p-4'}`}>
-      <div className="flex items-center gap-1.5 mb-1">
+      <div className="flex items-center gap-1.5 mb-1.5">
         <span className="tag-auto text-[9px]">⚡</span>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="h-3 w-3 text-muted-foreground cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
+            <TooltipContent className="max-w-xs">
               <p className="text-xs">{tooltip}</p>
             </TooltipContent>
           </Tooltip>

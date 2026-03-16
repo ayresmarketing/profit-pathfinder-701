@@ -28,16 +28,16 @@ export default function InputField({
   const inputClass = highlight ? 'user-input' : 'precision-input';
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center gap-1.5">
-        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</label>
-        {highlight && <span className="text-[8px] text-neon-yellow">✏️</span>}
+        <label className="text-xs font-medium text-muted-foreground">{label}</label>
+        {highlight && <span className="text-[9px] text-amber">✏️</span>}
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="h-3 w-3 text-muted-foreground cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
+            <TooltipContent className="max-w-xs">
               <p className="text-xs">{tooltip}</p>
             </TooltipContent>
           </Tooltip>

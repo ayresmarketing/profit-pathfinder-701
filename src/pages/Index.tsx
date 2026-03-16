@@ -1,26 +1,23 @@
 import { useState } from 'react';
 import { OperationProvider } from '@/contexts/OperationContext';
 import FinancialSimulator from '@/components/simulator/FinancialSimulator';
-import OfferStack from '@/components/offers/OfferStack';
 import CPAForecast from '@/components/cpa/CPAForecast';
 import ScenarioSimulator from '@/components/scenarios/ScenarioSimulator';
 import HealthDashboard from '@/components/dashboard/HealthDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Layers, Target, FlaskConical, Activity } from 'lucide-react';
+import { Calculator, Target, FlaskConical, Activity } from 'lucide-react';
 
 const tabs = [
-  { id: 'simulator', label: 'Simulador', icon: Calculator },
-  { id: 'offers', label: 'Monetização', icon: Layers },
-  { id: 'cpa', label: 'Previsão CPA', icon: Target },
-  { id: 'scenarios', label: 'Cenários', icon: FlaskConical },
-  { id: 'dashboard', label: 'Dashboard', icon: Activity },
+  { id: 'simulator', label: 'Operação', icon: Calculator, desc: 'Produto + Funil' },
+  { id: 'cpa', label: 'Previsão CPA', icon: Target, desc: 'Tráfego' },
+  { id: 'scenarios', label: 'Cenários', icon: FlaskConical, desc: 'Simulações' },
+  { id: 'dashboard', label: 'Dashboard', icon: Activity, desc: 'Saúde' },
 ] as const;
 
 type TabId = typeof tabs[number]['id'];
 
 const tabComponents: Record<TabId, React.FC> = {
   simulator: FinancialSimulator,
-  offers: OfferStack,
   cpa: CPAForecast,
   scenarios: ScenarioSimulator,
   dashboard: HealthDashboard,
@@ -34,20 +31,21 @@ export default function Index() {
     <OperationProvider>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="border-b border-border px-4 md:px-8 py-3">
+        <header className="border-b border-border px-4 md:px-8 py-4">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-mono font-bold text-sm">AP</span>
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center animate-neon-pulse">
+                <span className="text-primary-foreground font-display font-bold text-sm">AP</span>
               </div>
               <div>
-                <h1 className="text-sm font-semibold tracking-tight text-foreground">Anti-Prejuízo</h1>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Terminal de Inteligência Financeira</p>
+                <h1 className="font-display text-sm font-bold tracking-wider text-foreground">ANTI-PREJUÍZO</h1>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em]">Terminal de Inteligência Financeira</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground font-mono hidden md:block">
-              Sua operação não é uma aposta. É um cálculo.
-            </p>
+            <div className="hidden md:flex items-center gap-3">
+              <span className="tag-user">✏️ Você preenche</span>
+              <span className="tag-auto">⚡ Calculado</span>
+            </div>
           </div>
         </header>
 
@@ -61,14 +59,21 @@ export default function Index() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-xs font-medium uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
+                  className={`relative flex items-center gap-2 px-5 py-3.5 text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
                     isActive
-                      ? 'border-primary text-electric'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  {tab.label}
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="tab-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"
+                      style={{ boxShadow: '0 0 12px hsl(var(--primary))' }}
+                    />
+                  )}
                 </button>
               );
             })}

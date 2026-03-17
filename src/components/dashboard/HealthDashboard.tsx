@@ -19,10 +19,10 @@ const item = {
 };
 
 const chartStyle = {
-  background: 'hsl(222, 40%, 11%)',
-  border: '1px solid hsl(222, 20%, 18%)',
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: 12,
-  color: 'hsl(210, 40%, 98%)',
+  color: 'hsl(var(--foreground))',
 };
 
 export default function HealthDashboard() {

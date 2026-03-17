@@ -28,17 +28,16 @@ export default function InputField({
   const inputClass = highlight ? 'user-input' : 'precision-input';
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center gap-1.5">
-        <label className="text-xs font-medium text-muted-foreground">{label}</label>
-        {highlight && <span className="text-[9px] text-amber">✏️</span>}
+        <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</label>
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+              <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-xs">{tooltip}</p>
+            <TooltipContent className="max-w-xs bg-popover border-border">
+              <p className="text-xs text-popover-foreground">{tooltip}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -55,7 +54,7 @@ export default function InputField({
           min={min}
           max={max}
           disabled={disabled}
-          className={`${inputClass} w-full text-foreground ${prefix ? 'pl-9' : ''} ${suffix ? 'pr-8' : ''}`}
+          className={`${inputClass} w-full ${prefix ? 'pl-9' : ''} ${suffix ? 'pr-8' : ''}`}
         />
         {suffix && (
           <span className="absolute right-3 text-xs text-muted-foreground font-mono">{suffix}</span>

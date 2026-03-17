@@ -54,11 +54,9 @@ export default {
         emerald: "hsl(var(--emerald))",
         amber: "hsl(var(--amber))",
         rose: "hsl(var(--rose))",
-        electric: "hsl(var(--electric))",
+        violet: "hsl(var(--violet))",
         surface: {
-          DEFAULT: "hsl(var(--surface))",
-          raised: "hsl(var(--surface-raised))",
-          overlay: "hsl(var(--surface-overlay))",
+          elevated: "hsl(var(--surface-elevated))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

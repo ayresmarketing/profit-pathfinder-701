@@ -6,17 +6,13 @@ interface ProfitabilityGaugeProps {
 }
 
 export default function ProfitabilityGauge({ cpaMax, cpaProjected }: ProfitabilityGaugeProps) {
-  // Map CPA to gauge angle (0 = left/green, 180 = right/red)
-  // 0% of max = 0°, 100% = 120°, >100% = up to 180°
   const ratio = cpaMax > 0 ? cpaProjected / cpaMax : 1;
-  const projectedAngle = Math.min(ratio * 140, 180); // cap at 180
-  const maxAngle = 140; // CPA max is always at 140°
-
+  const projectedAngle = Math.min(ratio * 140, 180);
+  const maxAngle = 140;
   const isOverBudget = cpaProjected > cpaMax;
 
-  // SVG arc calculations
   const cx = 150, cy = 130, r = 100;
-  const startAngle = -180; // left
+  const startAngle = -180;
 
   function polarToCartesian(angle: number) {
     const rad = (angle * Math.PI) / 180;
@@ -27,7 +23,6 @@ export default function ProfitabilityGauge({ cpaMax, cpaProjected }: Profitabili
   const arcEnd = polarToCartesian(0);
   const arcPath = `M ${arcStart.x} ${arcStart.y} A ${r} ${r} 0 1 1 ${arcEnd.x} ${arcEnd.y}`;
 
-  // Pointer positions
   const maxPointer = polarToCartesian(startAngle + maxAngle);
   const projPointer = polarToCartesian(startAngle + projectedAngle);
 
@@ -35,37 +30,41 @@ export default function ProfitabilityGauge({ cpaMax, cpaProjected }: Profitabili
     <div className="flex flex-col items-center">
       <svg viewBox="0 0 300 160" className="w-full max-w-xs">
         {/* Background arc */}
-        <path d={arcPath} fill="none" stroke="hsl(var(--muted))" strokeWidth="12" strokeLinecap="round" />
+        <path d={arcPath} fill="none" stroke="hsl(222, 30%, 16%)" strokeWidth="14" strokeLinecap="round" />
 
-        {/* Colored arc segments */}
+        {/* Gradient arc */}
         <defs>
           <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(var(--emerald))" />
-            <stop offset="50%" stopColor="hsl(var(--amber))" />
-            <stop offset="100%" stopColor="hsl(var(--rose))" />
+            <stop offset="0%" stopColor="hsl(152, 69%, 45%)" />
+            <stop offset="50%" stopColor="hsl(38, 92%, 50%)" />
+            <stop offset="100%" stopColor="hsl(0, 84%, 60%)" />
           </linearGradient>
         </defs>
-        <path d={arcPath} fill="none" stroke="url(#gaugeGrad)" strokeWidth="12" strokeLinecap="round" opacity="0.6" />
+        <path d={arcPath} fill="none" stroke="url(#gaugeGrad)" strokeWidth="14" strokeLinecap="round" opacity="0.7" />
 
-        {/* CPA Max pointer (static) */}
+        {/* CPA Max pointer */}
         <motion.circle
-          cx={maxPointer.x} cy={maxPointer.y} r="6"
-          fill="hsl(var(--electric))"
+          cx={maxPointer.x} cy={maxPointer.y} r="7"
+          fill="hsl(217, 91%, 60%)"
+          stroke="hsl(222, 47%, 8%)"
+          strokeWidth="3"
           initial={{ scale: 0 }} animate={{ scale: 1 }}
           transition={{ delay: 0.3, type: 'spring' }}
         />
-        <text x={maxPointer.x} y={maxPointer.y - 12} textAnchor="middle" className="text-[8px] fill-electric font-mono font-semibold">MAX</text>
+        <text x={maxPointer.x} y={maxPointer.y - 14} textAnchor="middle" fill="hsl(217, 91%, 60%)" fontSize="9" fontFamily="JetBrains Mono" fontWeight="700">MAX</text>
 
-        {/* CPA Projected pointer (dynamic) */}
+        {/* CPA Projected pointer */}
         <motion.circle
-          cx={projPointer.x} cy={projPointer.y} r="8"
-          fill={isOverBudget ? 'hsl(var(--rose))' : 'hsl(var(--emerald))'}
+          cx={projPointer.x} cy={projPointer.y} r="9"
+          fill={isOverBudget ? 'hsl(0, 84%, 60%)' : 'hsl(152, 69%, 45%)'}
+          stroke="hsl(222, 47%, 8%)"
+          strokeWidth="3"
           initial={{ scale: 0 }} animate={{ scale: 1 }}
           transition={{ delay: 0.5, type: 'spring' }}
-          className={isOverBudget ? 'animate-pulse-danger' : ''}
         />
         <text x={projPointer.x} y={projPointer.y - 14} textAnchor="middle"
-          className={`text-[8px] font-mono font-semibold ${isOverBudget ? 'fill-rose' : 'fill-emerald'}`}>
+          fill={isOverBudget ? 'hsl(0, 84%, 60%)' : 'hsl(152, 69%, 45%)'}
+          fontSize="9" fontFamily="JetBrains Mono" fontWeight="700">
           PROJ
         </text>
       </svg>

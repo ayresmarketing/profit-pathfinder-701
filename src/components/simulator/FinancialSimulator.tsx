@@ -129,7 +129,7 @@ export default function FinancialSimulator() {
                   ))}
                 </Pie>
                 <RTooltip
-                  contentStyle={{ background: 'hsl(222, 40%, 11%)', border: '1px solid hsl(222, 20%, 18%)', borderRadius: 12, color: 'hsl(210, 40%, 98%)' }}
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, color: 'hsl(var(--foreground))' }}
                   formatter={(v: number) => formatBRL(v)}
                 />
               </PieChart>

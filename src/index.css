@@ -9,6 +9,77 @@
     --font-sans: 'Inter', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 14% 93%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 50%;
+
+    --radius: 0.75rem;
+
+    /* Signal System */
+    --emerald: 152 69% 36%;
+    --emerald-soft: 152 69% 36% / 0.08;
+    --amber: 38 92% 45%;
+    --amber-soft: 38 92% 45% / 0.08;
+    --rose: 0 84% 55%;
+    --rose-soft: 0 84% 55% / 0.08;
+    --violet: 263 70% 50%;
+    --violet-soft: 263 70% 50% / 0.08;
+
+    /* Surfaces */
+    --surface-glass: 0 0% 100% / 0.8;
+    --surface-elevated: 0 0% 100%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 50%), hsl(263, 70%, 50%));
+    --gradient-success: linear-gradient(135deg, hsl(152, 69%, 36%), hsl(172, 66%, 40%));
+    --gradient-danger: linear-gradient(135deg, hsl(0, 84%, 55%), hsl(20, 90%, 50%));
+
+    /* User input */
+    --input-highlight: 217 91% 50%;
+    --input-highlight-bg: 217 91% 50% / 0.06;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 217 91% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 50%;
+
+    /* Chart colors for light mode */
+    --chart-grid: 220 13% 91%;
+    --chart-text: 220 9% 46%;
+    --chart-tooltip-bg: 0 0% 100%;
+    --chart-tooltip-border: 220 13% 91%;
+    --chart-tooltip-text: 222 47% 11%;
+  }
+
+  .dark {
     --background: 222 47% 8%;
     --foreground: 210 40% 98%;
 
@@ -36,8 +107,6 @@
     --border: 222 20% 18%;
     --input: 222 20% 18%;
     --ring: 217 91% 60%;
-
-    --radius: 0.75rem;
 
     /* Signal System */
     --emerald: 152 69% 45%;
@@ -70,6 +139,13 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 20% 14%;
     --sidebar-ring: 217 91% 60%;
+
+    /* Chart colors for dark mode */
+    --chart-grid: 222 20% 18%;
+    --chart-text: 215 20% 55%;
+    --chart-tooltip-bg: 222 40% 11%;
+    --chart-tooltip-border: 222 20% 18%;
+    --chart-tooltip-text: 210 40% 98%;
   }
 }
 
@@ -105,22 +181,28 @@
 }
 
 @layer components {
-  /* Glass card with subtle glow */
+  /* Glass card */
   .glass-card {
     @apply rounded-xl;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  }
+  .dark .glass-card {
     box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 0 4px 24px -4px rgb(0 0 0 / 0.3);
   }
 
-  /* Premium card with gradient border hint */
+  /* Premium card */
   .premium-card {
     @apply rounded-2xl p-6;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
-    box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 0 8px 32px -8px rgb(0 0 0 / 0.4);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
     position: relative;
     overflow: hidden;
+  }
+  .dark .premium-card {
+    box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 0 8px 32px -8px rgb(0 0 0 / 0.4);
   }
   .premium-card::before {
     content: '';
@@ -129,7 +211,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
   }
 
   /* Section card */
@@ -137,7 +219,7 @@
     @apply rounded-2xl p-6;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
-    box-shadow: 0 4px 24px -4px rgb(0 0 0 / 0.3);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
   }
 
   /* Precision input */
@@ -161,7 +243,7 @@
   .user-input:focus {
     border-color: hsl(var(--primary));
     outline: none;
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15), 0 0 20px -4px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
   }
 
   /* Calc value display */
@@ -181,9 +263,12 @@
   .bg-signal-warning { background: hsl(var(--amber-soft)); }
   .bg-signal-danger { background: hsl(var(--rose-soft)); }
 
-  .number-glow-safe { color: hsl(var(--emerald)); text-shadow: 0 0 20px hsl(var(--emerald) / 0.3); }
-  .number-glow-danger { color: hsl(var(--rose)); text-shadow: 0 0 20px hsl(var(--rose) / 0.3); }
-  .number-glow-primary { color: hsl(var(--primary)); text-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+  .number-glow-safe { color: hsl(var(--emerald)); }
+  .number-glow-danger { color: hsl(var(--rose)); }
+  .number-glow-primary { color: hsl(var(--primary)); }
+  .dark .number-glow-safe { text-shadow: 0 0 20px hsl(var(--emerald) / 0.3); }
+  .dark .number-glow-danger { text-shadow: 0 0 20px hsl(var(--rose) / 0.3); }
+  .dark .number-glow-primary { text-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
 
   /* Section title */
   .section-title {

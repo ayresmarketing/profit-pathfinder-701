@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { OperationProvider } from '@/contexts/OperationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import FinancialSimulator from '@/components/simulator/FinancialSimulator';
 import CPAForecast from '@/components/cpa/CPAForecast';
 import ScenarioSimulator from '@/components/scenarios/ScenarioSimulator';
 import HealthDashboard from '@/components/dashboard/HealthDashboard';
+import LaunchPlanner from '@/components/planning/LaunchPlanner';
+import ThemeToggle from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Target, FlaskConical, Activity, Menu, X, TrendingUp } from 'lucide-react';
+import { Calculator, Target, FlaskConical, Activity, Menu, TrendingUp, Rocket, LogOut } from 'lucide-react';
 
 const tabs = [
   { id: 'simulator', label: 'Operação', icon: Calculator, desc: 'Produto + Funil' },
   { id: 'cpa', label: 'Previsão CPA', icon: Target, desc: 'Tráfego Pago' },
   { id: 'scenarios', label: 'Cenários', icon: FlaskConical, desc: 'Simulações' },
+  { id: 'planning', label: 'Planejamento', icon: Rocket, desc: 'Lançamento Pago' },
   { id: 'dashboard', label: 'Dashboard', icon: Activity, desc: 'Saúde Financeira' },
 ] as const;
 
@@ -20,12 +24,14 @@ const tabComponents: Record<TabId, React.FC> = {
   simulator: FinancialSimulator,
   cpa: CPAForecast,
   scenarios: ScenarioSimulator,
+  planning: LaunchPlanner,
   dashboard: HealthDashboard,
 };
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<TabId>('simulator');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { logout, userEmail } = useAuth();
   const ActiveComponent = tabComponents[activeTab];
 
   return (
@@ -38,7 +44,7 @@ export default function Index() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+              className="fixed inset-0 bg-black/40 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
           )}
@@ -47,7 +53,7 @@ export default function Index() {
         {/* Sidebar */}
         <aside className={`
           fixed lg:sticky top-0 left-0 z-50 h-screen w-72 lg:w-64
-          bg-sidebar border-r border-sidebar-border
+          bg-card border-r border-border
           flex flex-col transition-transform duration-300
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
@@ -86,29 +92,39 @@ export default function Index() {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border">
+          <div className="p-4 border-t border-border space-y-3">
             <div className="flex items-center gap-2">
               <span className="tag-user text-[9px]">✏️ Editável</span>
               <span className="tag-auto text-[9px]">⚡ Calculado</span>
             </div>
+            {userEmail && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{userEmail}</span>
+                <button onClick={logout} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title="Sair">
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </aside>
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
-          {/* Top bar (mobile) */}
-          <header className="sticky top-0 z-30 lg:hidden bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
+          {/* Top bar */}
+          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
-              <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                <Menu className="h-5 w-5 text-foreground" />
-              </button>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                  <TrendingUp className="h-3.5 w-3.5 text-white" />
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-secondary transition-colors lg:hidden">
+                  <Menu className="h-5 w-5 text-foreground" />
+                </button>
+                <div className="flex items-center gap-2 lg:hidden">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+                    <TrendingUp className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <span className="text-xs font-extrabold tracking-tight text-foreground">ANTI-PREJUÍZO</span>
                 </div>
-                <span className="text-xs font-extrabold tracking-tight text-foreground">ANTI-PREJUÍZO</span>
               </div>
-              <div className="w-9" />
+              <ThemeToggle />
             </div>
           </header>
 

@@ -1,35 +1,29 @@
 import { useState } from 'react';
 import { OperationProvider } from '@/contexts/OperationContext';
 import { useAuth } from '@/contexts/AuthContext';
-import FinancialSimulator from '@/components/simulator/FinancialSimulator';
-import CPAForecast from '@/components/cpa/CPAForecast';
-import ScenarioSimulator from '@/components/scenarios/ScenarioSimulator';
-import HealthDashboard from '@/components/dashboard/HealthDashboard';
+import ProductRegistration from '@/components/cadastro/ProductRegistration';
+import PerpetuoAnalysis from '@/components/perpetuo/PerpetuoAnalysis';
 import LaunchPlanner from '@/components/planning/LaunchPlanner';
 import ThemeToggle from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Target, FlaskConical, Activity, Menu, TrendingUp, Rocket, LogOut } from 'lucide-react';
+import { Package, BarChart3, Rocket, Menu, TrendingUp, LogOut } from 'lucide-react';
 
 const tabs = [
-  { id: 'simulator', label: 'Operação', icon: Calculator, desc: 'Produto + Funil' },
-  { id: 'cpa', label: 'Previsão CPA', icon: Target, desc: 'Tráfego Pago' },
-  { id: 'scenarios', label: 'Cenários', icon: FlaskConical, desc: 'Simulações' },
-  { id: 'planning', label: 'Planejamento', icon: Rocket, desc: 'Lançamento Pago' },
-  { id: 'dashboard', label: 'Dashboard', icon: Activity, desc: 'Saúde Financeira' },
+  { id: 'cadastro', label: 'Cadastro', icon: Package, desc: 'Produtos & Funil' },
+  { id: 'perpetuo', label: 'Perpétuo', icon: BarChart3, desc: 'Análise & CPA' },
+  { id: 'planning', label: 'Lançamento', icon: Rocket, desc: 'Lançamento Pago' },
 ] as const;
 
 type TabId = typeof tabs[number]['id'];
 
 const tabComponents: Record<TabId, React.FC> = {
-  simulator: FinancialSimulator,
-  cpa: CPAForecast,
-  scenarios: ScenarioSimulator,
+  cadastro: ProductRegistration,
+  perpetuo: PerpetuoAnalysis,
   planning: LaunchPlanner,
-  dashboard: HealthDashboard,
 };
 
 export default function Index() {
-  const [activeTab, setActiveTab] = useState<TabId>('simulator');
+  const [activeTab, setActiveTab] = useState<TabId>('cadastro');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { logout, userEmail } = useAuth();
   const ActiveComponent = tabComponents[activeTab];
@@ -40,13 +34,8 @@ export default function Index() {
         {/* Mobile overlay */}
         <AnimatePresence>
           {sidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
           )}
         </AnimatePresence>
 
@@ -54,10 +43,9 @@ export default function Index() {
         <aside className={`
           fixed lg:sticky top-0 left-0 z-50 h-screen w-72 lg:w-64
           bg-card border-r border-border
-          flex flex-col transition-transform duration-300
+          flex flex-col transition-transform duration-300 print:hidden
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          {/* Logo */}
           <div className="p-6 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
@@ -70,17 +58,13 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Nav */}
           <nav className="flex-1 px-3 py-2 space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
-                  className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
-                >
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
+                  className={`sidebar-item w-full ${isActive ? 'active' : ''}`}>
                   <Icon className="h-[18px] w-[18px] shrink-0" />
                   <div className="text-left">
                     <span className="block text-[13px] font-semibold">{tab.label}</span>
@@ -91,7 +75,6 @@ export default function Index() {
             })}
           </nav>
 
-          {/* Footer */}
           <div className="p-4 border-t border-border space-y-3">
             <div className="flex items-center gap-2">
               <span className="tag-user text-[9px]">✏️ Editável</span>
@@ -110,8 +93,7 @@ export default function Index() {
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
-          {/* Top bar */}
-          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
+          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 print:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-secondary transition-colors lg:hidden">
@@ -129,19 +111,16 @@ export default function Index() {
           </header>
 
           {/* Mobile tab bar */}
-          <div className="lg:hidden bg-background border-b border-border overflow-x-auto">
+          <div className="lg:hidden bg-background border-b border-border overflow-x-auto print:hidden">
             <div className="flex min-w-max px-2">
               {tabs.map(tab => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold whitespace-nowrap relative transition-colors ${
                       isActive ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                  >
+                    }`}>
                     <Icon className="h-3.5 w-3.5" />
                     {tab.label}
                     {isActive && (
@@ -156,13 +135,8 @@ export default function Index() {
           {/* Content */}
           <main className="flex-1 p-4 md:p-6 lg:p-8">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.25, ease: [0.25, 0, 0, 1] }}
-              >
+              <motion.div key={activeTab} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25, ease: [0.25, 0, 0, 1] }}>
                 <ActiveComponent />
               </motion.div>
             </AnimatePresence>

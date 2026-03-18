@@ -30,7 +30,7 @@ export default function ProfitabilityGauge({ cpaMax, cpaProjected }: Profitabili
     <div className="flex flex-col items-center">
       <svg viewBox="0 0 300 160" className="w-full max-w-xs">
         {/* Background arc */}
-        <path d={arcPath} fill="none" stroke="hsl(222, 30%, 16%)" strokeWidth="14" strokeLinecap="round" />
+        <path d={arcPath} fill="none" stroke="hsl(var(--border))" strokeWidth="14" strokeLinecap="round" />
 
         {/* Gradient arc */}
         <defs>
@@ -43,30 +43,19 @@ export default function ProfitabilityGauge({ cpaMax, cpaProjected }: Profitabili
         <path d={arcPath} fill="none" stroke="url(#gaugeGrad)" strokeWidth="14" strokeLinecap="round" opacity="0.7" />
 
         {/* CPA Max pointer */}
-        <motion.circle
-          cx={maxPointer.x} cy={maxPointer.y} r="7"
-          fill="hsl(217, 91%, 60%)"
-          stroke="hsl(222, 47%, 8%)"
-          strokeWidth="3"
-          initial={{ scale: 0 }} animate={{ scale: 1 }}
-          transition={{ delay: 0.3, type: 'spring' }}
-        />
+        <motion.circle cx={maxPointer.x} cy={maxPointer.y} r="7"
+          fill="hsl(217, 91%, 60%)" stroke="hsl(var(--card))" strokeWidth="3"
+          initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: 'spring' }} />
         <text x={maxPointer.x} y={maxPointer.y - 14} textAnchor="middle" fill="hsl(217, 91%, 60%)" fontSize="9" fontFamily="JetBrains Mono" fontWeight="700">MAX</text>
 
         {/* CPA Projected pointer */}
-        <motion.circle
-          cx={projPointer.x} cy={projPointer.y} r="9"
+        <motion.circle cx={projPointer.x} cy={projPointer.y} r="9"
           fill={isOverBudget ? 'hsl(0, 84%, 60%)' : 'hsl(152, 69%, 45%)'}
-          stroke="hsl(222, 47%, 8%)"
-          strokeWidth="3"
-          initial={{ scale: 0 }} animate={{ scale: 1 }}
-          transition={{ delay: 0.5, type: 'spring' }}
-        />
+          stroke="hsl(var(--card))" strokeWidth="3"
+          initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5, type: 'spring' }} />
         <text x={projPointer.x} y={projPointer.y - 14} textAnchor="middle"
           fill={isOverBudget ? 'hsl(0, 84%, 60%)' : 'hsl(152, 69%, 45%)'}
-          fontSize="9" fontFamily="JetBrains Mono" fontWeight="700">
-          PROJ
-        </text>
+          fontSize="9" fontFamily="JetBrains Mono" fontWeight="700">PROJ</text>
       </svg>
     </div>
   );

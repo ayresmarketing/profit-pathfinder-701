@@ -9,8 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Package, BarChart3, Rocket, Menu, TrendingUp, LogOut } from 'lucide-react';
 
 const tabs = [
-  { id: 'cadastro', label: 'Cadastro', icon: Package, desc: 'Produtos & Funil' },
-  { id: 'perpetuo', label: 'Perpétuo', icon: BarChart3, desc: 'Análise & CPA' },
+  { id: 'cadastro', label: 'Cadastro', icon: Package, desc: 'Produtos & Taxas' },
+  { id: 'perpetuo', label: 'Perpétuo', icon: BarChart3, desc: 'Análise & Funil' },
   { id: 'planning', label: 'Lançamento', icon: Rocket, desc: 'Lançamento Pago' },
 ] as const;
 
@@ -41,19 +41,19 @@ export default function Index() {
 
         {/* Sidebar */}
         <aside className={`
-          fixed lg:sticky top-0 left-0 z-50 h-screen w-72 lg:w-64
+          fixed lg:sticky top-0 left-0 z-50 h-screen w-72 lg:w-60
           bg-card border-r border-border
-          flex flex-col transition-transform duration-300 print:hidden
+          flex flex-col transition-transform duration-300 print:hidden shrink-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <div className="p-6 pb-4">
+          <div className="p-5 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                <TrendingUp className="h-5 w-5 text-white" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+                <TrendingUp className="h-4.5 w-4.5 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-extrabold tracking-tight text-foreground">ANTI-PREJUÍZO</h1>
-                <p className="text-[10px] text-muted-foreground font-medium">Inteligência Financeira</p>
+                <h1 className="text-xs font-extrabold tracking-tight text-foreground">ANTI-PREJUÍZO</h1>
+                <p className="text-[10px] text-muted-foreground">Inteligência Financeira</p>
               </div>
             </div>
           </div>
@@ -135,8 +135,8 @@ export default function Index() {
           {/* Content */}
           <main className="flex-1 p-4 md:p-6 lg:p-8">
             <AnimatePresence mode="wait">
-              <motion.div key={activeTab} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25, ease: [0.25, 0, 0, 1] }}>
+              <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2, ease: [0.25, 0, 0, 1] }}>
                 <ActiveComponent />
               </motion.div>
             </AnimatePresence>

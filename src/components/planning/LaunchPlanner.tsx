@@ -27,6 +27,9 @@ interface Lot {
   price: number;
   expectedSales: number;
   startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
 }
 
 interface LaunchFunnelOffer {
@@ -184,7 +187,7 @@ export default function LaunchPlanner() {
 
   const addLot = () => {
     const num = lots.length + 1;
-    setLots(prev => [...prev, { id: crypto.randomUUID(), name: `Lote ${num}`, price: 297 + (num - 1) * 100, expectedSales: 50, startDate: '' }]);
+    setLots(prev => [...prev, { id: crypto.randomUUID(), name: `Lote ${num}`, price: 297 + (num - 1) * 100, expectedSales: 50, startDate: '', endDate: '', startTime: '', endTime: '' }]);
     setLotsEnabled(true);
   };
   const updateLot = (id: string, partial: Partial<Lot>) => setLots(prev => prev.map(l => l.id === id ? { ...l, ...partial } : l));
@@ -279,7 +282,7 @@ export default function LaunchPlanner() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Nome</label>
                     <input type="text" value={lot.name} onChange={(e) => updateLot(lot.id, { name: e.target.value })} className="user-input w-full text-sm" />
@@ -289,6 +292,17 @@ export default function LaunchPlanner() {
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Data início</label>
                     <input type="date" value={lot.startDate} onChange={(e) => updateLot(lot.id, { startDate: e.target.value })} className="user-input w-full text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Data término</label>
+                    <input type="date" value={lot.endDate} onChange={(e) => updateLot(lot.id, { endDate: e.target.value })} className="user-input w-full text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Horário</label>
+                    <div className="flex gap-1">
+                      <input type="time" value={lot.startTime} onChange={(e) => updateLot(lot.id, { startTime: e.target.value })} className="user-input w-full text-xs" placeholder="Início" />
+                      <input type="time" value={lot.endTime} onChange={(e) => updateLot(lot.id, { endTime: e.target.value })} className="user-input w-full text-xs" placeholder="Fim" />
+                    </div>
                   </div>
                 </div>
               </div>

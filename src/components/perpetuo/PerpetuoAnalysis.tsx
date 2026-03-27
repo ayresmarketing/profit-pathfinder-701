@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Cell, Tooltip as RTooltip, PieChart, Pie, LineChart, Line, Area, AreaChart
+  Cell, Tooltip as RTooltip, PieChart, Pie
 } from 'recharts';
 
 const fadeIn = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
@@ -62,63 +62,129 @@ export default function PerpetuoAnalysis() {
     ...state.offers.map(o => ({ id: o.id, name: o.name, price: o.price })),
   ];
 
+  // Helper to get full product data
+  const getProductData = (id: string) => {
+    if (id === 'main') return state.product;
+    return state.offers.find(o => o.id === id);
+  };
+
+  // Calculate net per sale for any product: price - (price*taxRate% + price*platformRate% + platformFixedFee + price*commissionRate% + otherFixedCosts)
+  const calcNetPerSale = (prod: any) => {
+    if (!prod) return 0;
+    const tax = prod.price * (prod.taxRate / 100);
+    const platform = prod.price * (prod.platformRate / 100) + prod.platformFixedFee;
+    const commission = prod.price * (prod.commissionRate / 100);
+    return prod.price - tax - platform - commission - (prod.otherFixedCosts || 0);
+  };
+
   // Funnel calculations
   const funnelAnalysis = useMemo(() => {
     if (!funnelCreated) return null;
 
-    const mainProduct = state.product;
-    const mainCalc = calcMainProduct(mainProduct);
-    const cpaProj = calcCPAProjection(trafficMetrics as any, mainCalc.netValuePerSale, mainCalc.netValuePerSale);
+    const mainProd = getProductData(funnelConfig.mainProductId);
+    if (!mainProd) return null;
 
+    const mainNetPerSale = calcNetPerSale(mainProd);
+
+    // Traffic projection
+    const impressions = (trafficMetrics.investment / trafficMetrics.cpm) * 1000;
+    const clicks = impressions * (trafficMetrics.ctr / 100);
+    const cpc = trafficMetrics.investment / clicks;
+    const pageViews = clicks * (trafficMetrics.connectRate / 100);
+    const costPerPageView = trafficMetrics.investment / pageViews;
+    const checkouts = pageViews * (trafficMetrics.pageToCheckout / 100);
+    const costPerCheckout = trafficMetrics.investment / checkouts;
+    const purchasesRaw = checkouts * (trafficMetrics.checkoutToPurchase / 100);
+    const purchases = Math.floor(purchasesRaw);
+    const projectedCPA = purchases > 0 ? trafficMetrics.investment / purchases : Infinity;
+
+    // Main product revenue
+    const mainSales = purchases;
+    const mainGrossRevenue = mainProd.price * mainSales;
+    const mainNetRevenue = mainNetPerSale * mainSales;
+
+    // Offer calculations - conversion rate is based on main product sales
     const offerAnalysis = funnelConfig.offers.map(fo => {
-      const product = state.offers.find(o => o.id === fo.productId);
-      if (!product) return null;
-      const offerCalc = calcOffer({ ...product, conversionRate: fo.conversionRate }, cpaProj.purchases || salesGoal);
+      const prod = getProductData(fo.productId);
+      if (!prod) return null;
+      const offerNetPerSale = calcNetPerSale(prod);
+      const offerSales = Math.floor(mainSales * (fo.conversionRate / 100));
+      const grossRevenue = prod.price * offerSales;
+      const netRevenue = offerNetPerSale * offerSales;
+      // Contribution per main sale = net value × conversion rate
+      const contributionPerMainSale = offerNetPerSale * (fo.conversionRate / 100);
       return {
         ...fo,
-        product,
-        calc: offerCalc,
-        sales: Math.floor((cpaProj.purchases || salesGoal) * (fo.conversionRate / 100)),
+        product: prod,
+        netPerSale: offerNetPerSale,
+        sales: offerSales,
+        grossRevenue,
+        netRevenue,
+        contributionPerMainSale,
       };
     }).filter(Boolean) as any[];
 
-    const totalMainSales = cpaProj.purchases || salesGoal;
-    const funnelContribution = offerAnalysis.reduce((s: number, o: any) => s + o.calc.contributionPerMainSale, 0);
-    const cpaMaxProduct = mainCalc.netValuePerSale;
-    const cpaMaxFunnel = cpaMaxProduct + funnelContribution;
-    const totalSalesAll = totalMainSales + offerAnalysis.reduce((s: number, o: any) => s + o.sales, 0);
-    const profitPerSaleMain = mainCalc.netValuePerSale - cpaProj.projectedCPA;
-    const profitPerSaleFunnel = cpaMaxFunnel - cpaProj.projectedCPA;
+    // CPA máximo
+    const cpaMaxProduct = mainNetPerSale; // max CPA considering only main product
+    const funnelContribution = offerAnalysis.reduce((s: number, o: any) => s + o.contributionPerMainSale, 0);
+    const cpaMaxFunnel = cpaMaxProduct + funnelContribution; // max CPA considering full funnel
+
+    // Total sales
+    const totalSalesAll = mainSales + offerAnalysis.reduce((s: number, o: any) => s + o.sales, 0);
+
+    // Gross revenue (no costs removed)
+    const totalGrossRevenue = mainGrossRevenue + offerAnalysis.reduce((s: number, o: any) => s + o.grossRevenue, 0);
+
+    // Net revenue (costs removed but NOT investment)
+    const totalNetRevenue = mainNetRevenue + offerAnalysis.reduce((s: number, o: any) => s + o.netRevenue, 0);
+
+    // Lucro líquido real esperado = net revenue - (CPA estimado × vendas do principal)
+    const investmentNeeded = projectedCPA * mainSales;
+    const realNetProfit = totalNetRevenue - investmentNeeded;
+
+    // Profit per sale
+    const profitPerSaleMain = mainNetPerSale - projectedCPA;
+    const profitPerSaleFunnel = cpaMaxFunnel - projectedCPA;
 
     // Revenue breakdown for chart
     const revenueBreakdown = [
-      { name: mainProduct.name.slice(0, 15), bruto: mainProduct.price * totalMainSales, liquido: mainCalc.netValuePerSale * totalMainSales },
+      { name: mainProd.name.slice(0, 15), bruto: mainGrossRevenue, liquido: mainNetRevenue },
       ...offerAnalysis.map((oa: any) => ({
         name: oa.product.name.slice(0, 15),
-        bruto: oa.product.price * oa.sales,
-        liquido: oa.calc.netValuePerSale * oa.sales,
+        bruto: oa.grossRevenue,
+        liquido: oa.netRevenue,
       })),
     ];
 
-    // Cost composition
+    // Cost composition (per sale of main product)
+    const taxPerSale = mainProd.price * ((mainProd.taxRate || 0) / 100);
+    const platformPerSale = mainProd.price * ((mainProd.platformRate || 0) / 100) + (mainProd.platformFixedFee || 0);
+    const commissionPerSale = mainProd.price * ((mainProd.commissionRate || 0) / 100);
+    const otherCosts = mainProd.otherFixedCosts || 0;
     const costComposition = [
-      { name: 'Impostos', value: mainCalc.taxPerSale, color: 'hsl(38, 92%, 50%)' },
-      { name: 'Plataforma', value: mainCalc.platformFeePerSale, color: 'hsl(217, 91%, 60%)' },
-      { name: 'Comissão', value: mainCalc.commissionPerSale + mainProduct.otherFixedCosts, color: 'hsl(263, 70%, 58%)' },
-      { name: 'Líquido', value: Math.max(mainCalc.netValuePerSale, 0), color: 'hsl(152, 69%, 45%)' },
+      { name: 'Impostos', value: taxPerSale, color: 'hsl(38, 92%, 50%)' },
+      { name: 'Plataforma', value: platformPerSale, color: 'hsl(217, 91%, 60%)' },
+      { name: 'Comissão', value: commissionPerSale, color: 'hsl(263, 70%, 58%)' },
+      { name: 'Outros custos', value: otherCosts, color: 'hsl(0, 70%, 55%)' },
+      { name: 'Líquido', value: Math.max(mainNetPerSale, 0), color: 'hsl(152, 69%, 45%)' },
     ].filter(d => d.value > 0);
 
     return {
-      mainCalc, cpaProj, offerAnalysis, totalMainSales, totalSalesAll,
-      cpaMaxProduct, cpaMaxFunnel, profitPerSaleMain, profitPerSaleFunnel,
-      funnelContribution, revenueBreakdown, costComposition,
+      mainProd, mainNetPerSale, mainSales, mainGrossRevenue, mainNetRevenue,
+      impressions, clicks, cpc, pageViews, costPerPageView, checkouts, costPerCheckout,
+      purchases, projectedCPA,
+      offerAnalysis, totalSalesAll, totalGrossRevenue, totalNetRevenue,
+      investmentNeeded, realNetProfit,
+      cpaMaxProduct, cpaMaxFunnel, funnelContribution,
+      profitPerSaleMain, profitPerSaleFunnel,
+      revenueBreakdown, costComposition,
     };
-  }, [funnelCreated, funnelConfig, state.product, state.offers, trafficMetrics, salesGoal]);
+  }, [funnelCreated, funnelConfig, state.product, state.offers, trafficMetrics]);
 
   const activeCpaMax = funnelAnalysis?.cpaMaxProduct ?? funnelCalc.cpaMaxProduct;
   const activeCpaMaxFunnel = funnelAnalysis?.cpaMaxFunnel ?? funnelCalc.cpaMaxFunnel;
-  const activeCpaProjected = funnelAnalysis?.cpaProj.projectedCPA ?? cpaProjection.projectedCPA;
-  const activeNetPerSale = funnelAnalysis?.mainCalc.netValuePerSale ?? productCalc.netValuePerSale;
+  const activeCpaProjected = funnelAnalysis?.projectedCPA ?? cpaProjection.projectedCPA;
+  const activeNetPerSale = funnelAnalysis?.mainNetPerSale ?? productCalc.netValuePerSale;
 
   const healthProduct = getHealthStatus(activeCpaProjected, funnelCalc.healthZonesProduct);
   const signalMap = { healthy: 'safe' as const, moderate: 'warning' as const, aggressive: 'warning' as const, danger: 'danger' as const };
@@ -134,9 +200,10 @@ export default function PerpetuoAnalysis() {
   const requiredInvestment = requiredCPA * salesGoal;
   const scenario2 = calcScenario2(assumedCpa, activeNetPerSale, monthlyTarget2);
 
-  const profitMainOnly = (activeNetPerSale - activeCpaProjected) * salesGoal;
-  const profitFullFunnel = (activeCpaMaxFunnel - activeCpaProjected) * salesGoal;
-  const investmentNeeded = activeCpaProjected * salesGoal;
+  // Sales goal simulator
+  const goalInvestment = activeCpaProjected * salesGoal;
+  const goalProfitMainOnly = (activeNetPerSale - activeCpaProjected) * salesGoal;
+  const goalProfitFullFunnel = (activeCpaMaxFunnel - activeCpaProjected) * salesGoal;
 
   // Funnel dialog helpers
   const addFunnelOffer = (role: 'orderbump' | 'upsell' | 'downsell') => {
@@ -152,13 +219,12 @@ export default function PerpetuoAnalysis() {
 
   const handleExportPDF = () => window.print();
 
-  // Funnel stage data for visual
+  // Funnel stage data — without "Impressões"
   const funnelStages = funnelAnalysis ? [
-    { label: 'Impressões', value: funnelAnalysis.cpaProj.impressions, cost: trafficMetrics.cpm / 1000, pct: 100 },
-    { label: 'Cliques', value: funnelAnalysis.cpaProj.clicks, cost: funnelAnalysis.cpaProj.cpc, pct: (funnelAnalysis.cpaProj.clicks / funnelAnalysis.cpaProj.impressions) * 100 },
-    { label: 'Visualizações', value: funnelAnalysis.cpaProj.pageViews, cost: funnelAnalysis.cpaProj.costPerPageView, pct: (funnelAnalysis.cpaProj.pageViews / funnelAnalysis.cpaProj.impressions) * 100 },
-    { label: 'Checkouts', value: funnelAnalysis.cpaProj.checkouts, cost: funnelAnalysis.cpaProj.costPerCheckout, pct: (funnelAnalysis.cpaProj.checkouts / funnelAnalysis.cpaProj.impressions) * 100 },
-    { label: 'Compras', value: funnelAnalysis.cpaProj.purchases, cost: funnelAnalysis.cpaProj.projectedCPA, pct: (funnelAnalysis.cpaProj.purchases / funnelAnalysis.cpaProj.impressions) * 100 },
+    { label: 'Cliques', value: funnelAnalysis.clicks, cost: funnelAnalysis.cpc, pct: 100 },
+    { label: 'Visualizações', value: funnelAnalysis.pageViews, cost: funnelAnalysis.costPerPageView, pct: (funnelAnalysis.pageViews / funnelAnalysis.clicks) * 100 },
+    { label: 'Checkouts', value: funnelAnalysis.checkouts, cost: funnelAnalysis.costPerCheckout, pct: (funnelAnalysis.checkouts / funnelAnalysis.clicks) * 100 },
+    { label: 'Compras', value: funnelAnalysis.purchases, cost: funnelAnalysis.projectedCPA, pct: (funnelAnalysis.purchases / funnelAnalysis.clicks) * 100 },
   ] : [];
 
   return (
@@ -199,11 +265,11 @@ export default function PerpetuoAnalysis() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-center">
               <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Principal</span>
-              <p className="text-sm font-semibold text-foreground mt-1">{state.product.name}</p>
-              <p className="text-xs font-mono text-muted-foreground">{formatBRL(state.product.price)}</p>
+              <p className="text-sm font-semibold text-foreground mt-1">{getProductData(funnelConfig.mainProductId)?.name || state.product.name}</p>
+              <p className="text-xs font-mono text-muted-foreground">{formatBRL(getProductData(funnelConfig.mainProductId)?.price || state.product.price)}</p>
             </div>
             {funnelConfig.offers.map((fo, i) => {
-              const prod = state.offers.find(o => o.id === fo.productId);
+              const prod = getProductData(fo.productId);
               if (!prod) return null;
               const roleColors = { orderbump: 'border-primary/20 bg-primary/5', upsell: 'border-emerald/20 bg-emerald/5', downsell: 'border-amber/20 bg-amber/5' };
               const roleText = { orderbump: 'text-primary', upsell: 'text-emerald', downsell: 'text-amber' };
@@ -254,13 +320,13 @@ export default function PerpetuoAnalysis() {
           <motion.div variants={fadeIn}>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard label="CPA Máx. Produto" value={formatBRL(funnelAnalysis.cpaMaxProduct)} signal="primary"
-                tooltip="Máximo que você pode pagar por aquisição (só produto)" icon={<Target className="h-4 w-4" />} />
+                tooltip="Máximo que você pode pagar por aquisição considerando apenas o produto principal" icon={<Target className="h-4 w-4" />} />
               <MetricCard label="CPA Máx. Funil" value={formatBRL(funnelAnalysis.cpaMaxFunnel)} signal="safe"
-                tooltip="Máximo considerando todo o funil" icon={<Layers className="h-4 w-4" />} />
+                tooltip="Máximo considerando todo o funil (produto + ofertas)" icon={<Layers className="h-4 w-4" />} />
               <MetricCard label="CPA Projetado" value={formatBRL(activeCpaProjected)} signal={signalMap[healthProduct]}
-                tooltip="Custo por aquisição projetado com as métricas atuais" icon={<Megaphone className="h-4 w-4" />} />
-              <MetricCard label="Vendas Projetadas" value={formatNumber(funnelAnalysis.totalMainSales, 0)}
-                tooltip="Volume de vendas do produto principal" icon={<TrendingUp className="h-4 w-4" />} />
+                tooltip="Custo por aquisição projetado com as métricas de tráfego atuais" icon={<Megaphone className="h-4 w-4" />} />
+              <MetricCard label="Vendas Projetadas" value={formatNumber(funnelAnalysis.totalSalesAll, 0)}
+                tooltip="Quantidade total de vendas projetadas (principal + ofertas)" icon={<TrendingUp className="h-4 w-4" />} />
             </div>
           </motion.div>
 
@@ -291,9 +357,43 @@ export default function PerpetuoAnalysis() {
             </div>
           </motion.div>
 
-          {/* Profit & Revenue Grid */}
+          {/* Revenue Section */}
+          <motion.div variants={fadeIn} className="section-card">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5">📊 Faturamento & Lucro Projetado</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="rounded-xl bg-secondary/60 p-5 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Faturamento Bruto</p>
+                <p className="text-2xl font-mono font-bold text-foreground">{formatBRL(funnelAnalysis.totalGrossRevenue)}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Sem remover nenhum custo</p>
+              </div>
+              <div className="rounded-xl bg-secondary/60 p-5 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Faturamento Líquido</p>
+                <p className={`text-2xl font-mono font-bold ${funnelAnalysis.totalNetRevenue > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
+                  {formatBRL(funnelAnalysis.totalNetRevenue)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Após remover todas as taxas, sem considerar investimento</p>
+              </div>
+              <div className="rounded-xl bg-secondary/60 p-5 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Lucro Líquido Real Esperado</p>
+                <p className={`text-2xl font-mono font-bold ${funnelAnalysis.realNetProfit > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
+                  {formatBRL(funnelAnalysis.realNetProfit)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Base: CPA estimado de {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas
+                </p>
+              </div>
+            </div>
+            <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 text-center">
+              <p className="text-xs text-muted-foreground">
+                💰 <span className="font-semibold text-foreground">Investimento necessário:</span>{' '}
+                <span className="font-mono font-bold text-primary">{formatBRL(funnelAnalysis.investmentNeeded)}</span>
+                <span className="ml-1">(CPA {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas)</span>
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Profit per sale & Sales breakdown */}
           <motion.div variants={fadeIn} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Profit Cards */}
             <div className="section-card">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">📊 Lucro por Venda</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -302,33 +402,41 @@ export default function PerpetuoAnalysis() {
                   <p className={`text-2xl font-mono font-bold ${funnelAnalysis.profitPerSaleMain > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
                     {formatBRL(funnelAnalysis.profitPerSaleMain)}
                   </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Líquido produto - CPA estimado</p>
                 </div>
                 <div className="rounded-xl bg-secondary/60 p-4 text-center">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Funil Completo</p>
                   <p className={`text-2xl font-mono font-bold ${funnelAnalysis.profitPerSaleFunnel > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
                     {formatBRL(funnelAnalysis.profitPerSaleFunnel)}
                   </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Líquido funil - CPA estimado</p>
                 </div>
               </div>
             </div>
 
-            {/* Sales breakdown */}
             <div className="section-card">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">🛒 Vendas por Produto</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-4 py-3">
-                  <span className="text-sm font-medium text-foreground">{state.product.name}</span>
-                  <span className="text-sm font-mono font-bold text-foreground">{formatNumber(funnelAnalysis.totalMainSales, 0)} un</span>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{funnelAnalysis.mainProd.name}</span>
+                    <span className="text-[10px] text-primary ml-2 font-semibold">PRINCIPAL</span>
+                  </div>
+                  <span className="text-sm font-mono font-bold text-foreground">{formatNumber(funnelAnalysis.mainSales, 0)} un</span>
                 </div>
                 {funnelAnalysis.offerAnalysis.map((oa: any, i: number) => (
                   <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/50 px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-foreground">{oa.product.name}</span>
-                      <span className="text-[10px] text-muted-foreground">({oa.conversionRate}%)</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{oa.role} ({oa.conversionRate}%)</span>
                     </div>
                     <span className="text-sm font-mono font-bold text-foreground">{formatNumber(oa.sales, 0)} un</span>
                   </div>
                 ))}
+                <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/10 px-4 py-3">
+                  <span className="text-sm font-bold text-foreground">Total</span>
+                  <span className="text-sm font-mono font-bold text-primary">{formatNumber(funnelAnalysis.totalSalesAll, 0)} un</span>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -350,22 +458,22 @@ export default function PerpetuoAnalysis() {
               </div>
               <div className="rounded-xl bg-secondary/60 p-5 text-center">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Lucro (Produto)</p>
-                <p className={`text-2xl font-mono font-bold ${profitMainOnly > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
-                  {formatBRL(profitMainOnly)}
+                <p className={`text-2xl font-mono font-bold ${goalProfitMainOnly > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
+                  {formatBRL(goalProfitMainOnly)}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">Investimento: {formatBRL(investmentNeeded)}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Investimento: {formatBRL(goalInvestment)}</p>
               </div>
               <div className="rounded-xl bg-secondary/60 p-5 text-center">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Lucro (Funil)</p>
-                <p className={`text-2xl font-mono font-bold ${profitFullFunnel > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
-                  {formatBRL(profitFullFunnel)}
+                <p className={`text-2xl font-mono font-bold ${goalProfitFullFunnel > 0 ? 'number-glow-safe' : 'number-glow-danger'}`}>
+                  {formatBRL(goalProfitFullFunnel)}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">Investimento: {formatBRL(investmentNeeded)}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Investimento: {formatBRL(goalInvestment)}</p>
               </div>
             </div>
           </motion.div>
 
-          {/* Funnel Stages Visual */}
+          {/* Funnel Stages — Funnel Shape */}
           <motion.div variants={fadeIn} className="section-card">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">
@@ -376,27 +484,32 @@ export default function PerpetuoAnalysis() {
                 <p className="text-xs text-muted-foreground">Simulação de quanto você paga em cada etapa.</p>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="flex flex-col items-center gap-2 max-w-xl mx-auto">
               {funnelStages.map((stage, i) => {
                 const isLast = i === funnelStages.length - 1;
-                const barWidth = Math.max(stage.pct, 2);
+                const widthPct = 100 - (i * (60 / (funnelStages.length - 1 || 1)));
                 return (
-                  <div key={stage.label} className="grid grid-cols-[120px_1fr_100px] md:grid-cols-[140px_1fr_120px] items-center gap-3">
-                    <span className="text-xs font-medium text-muted-foreground text-right">{stage.label}</span>
-                    <div className="relative h-10 bg-secondary/60 rounded-lg overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-lg flex items-center px-3 ${isLast ? '' : 'bg-primary/20'}`}
-                        style={isLast ? { background: 'var(--gradient-primary)' } : undefined}
-                        initial={{ width: 0 }} animate={{ width: `${barWidth}%` }}
-                        transition={{ duration: 0.6, delay: i * 0.1 }}
-                      >
-                        <span className={`text-xs font-mono font-bold whitespace-nowrap ${isLast ? 'text-white' : 'text-foreground'}`}>
-                          {formatNumber(stage.value, 0)}
-                        </span>
-                      </motion.div>
+                  <motion.div
+                    key={stage.label}
+                    className={`relative rounded-xl flex items-center justify-between px-5 py-4 ${isLast ? 'text-white' : 'text-foreground'}`}
+                    style={{
+                      width: `${widthPct}%`,
+                      background: isLast ? 'var(--gradient-primary)' : 'hsl(var(--secondary))',
+                      minWidth: 220,
+                    }}
+                    initial={{ opacity: 0, scaleX: 0.8 }}
+                    animate={{ opacity: 1, scaleX: 1 }}
+                    transition={{ duration: 0.4, delay: i * 0.1 }}
+                  >
+                    <div>
+                      <p className={`text-xs font-bold uppercase tracking-wider ${isLast ? 'text-white/80' : 'text-muted-foreground'}`}>{stage.label}</p>
+                      <p className="text-lg font-mono font-bold">{formatNumber(stage.value, 0)}</p>
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">{formatBRL(stage.cost)}/un</span>
-                  </div>
+                    <div className="text-right">
+                      <p className={`text-[10px] ${isLast ? 'text-white/70' : 'text-muted-foreground'}`}>Custo/un</p>
+                      <p className="text-sm font-mono font-bold">{formatBRL(stage.cost)}</p>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -419,7 +532,7 @@ export default function PerpetuoAnalysis() {
             </div>
 
             <div className="section-card">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Distribuição de Custos</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Distribuição de Custos (por venda)</h3>
               <div className="flex items-center gap-6">
                 <div className="w-40 h-40 shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
@@ -550,12 +663,14 @@ export default function PerpetuoAnalysis() {
                 <ProfitabilityGauge cpaMax={activeCpaMax} cpaProjected={activeCpaProjected} />
               </div>
               <div className="flex-1 grid grid-cols-2 gap-4 w-full">
-                <MetricCard label="Fat. Bruto" value={formatBRL(funnelCalc.totalGrossRevenue)} compact />
-                <MetricCard label="Fat. Líquido" value={formatBRL(funnelCalc.totalNetRevenue)} signal="safe" compact
-                  subtitle={`Investimento: ${formatBRL(investmentNeeded)}`} />
-                <MetricCard label="Margem" value={formatPercent(funnelCalc.totalGrossRevenue > 0 ? (funnelCalc.totalNetRevenue / funnelCalc.totalGrossRevenue) * 100 : 0)}
-                  signal={funnelCalc.totalGrossRevenue > 0 && (funnelCalc.totalNetRevenue / funnelCalc.totalGrossRevenue) * 100 > 30 ? 'safe' : 'warning'} compact />
-                <MetricCard label="Break-even" value={`${funnelCalc.breakEvenSales} vendas`} compact />
+                <MetricCard label="Fat. Bruto" value={formatBRL(funnelAnalysis.totalGrossRevenue)} compact />
+                <MetricCard label="Fat. Líquido" value={formatBRL(funnelAnalysis.totalNetRevenue)} signal="safe" compact
+                  subtitle="Sem considerar investimento" />
+                <MetricCard label="Lucro Real" value={formatBRL(funnelAnalysis.realNetProfit)}
+                  signal={funnelAnalysis.realNetProfit > 0 ? 'safe' : 'danger'} compact
+                  subtitle={`Invest.: ${formatBRL(funnelAnalysis.investmentNeeded)}`} />
+                <MetricCard label="Margem" value={formatPercent(funnelAnalysis.totalGrossRevenue > 0 ? (funnelAnalysis.totalNetRevenue / funnelAnalysis.totalGrossRevenue) * 100 : 0)}
+                  signal={funnelAnalysis.totalGrossRevenue > 0 && (funnelAnalysis.totalNetRevenue / funnelAnalysis.totalGrossRevenue) * 100 > 30 ? 'safe' : 'warning'} compact />
               </div>
             </div>
 
@@ -608,8 +723,8 @@ export default function PerpetuoAnalysis() {
                         <SelectValue placeholder="Selecione um produto..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {state.offers.map(o => (
-                          <SelectItem key={o.id} value={o.id} className="text-xs">{o.name} — {formatBRL(o.price)}</SelectItem>
+                        {allProducts.map(p => (
+                          <SelectItem key={p.id} value={p.id} className="text-xs">{p.name} — {formatBRL(p.price)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -620,13 +735,13 @@ export default function PerpetuoAnalysis() {
                 );
               })}
 
-              {state.offers.length === 0 && (
+              {allProducts.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">
-                  Cadastre produtos secundários na aba "Cadastro" primeiro.
+                  Cadastre produtos na aba "Cadastro" primeiro.
                 </p>
               )}
 
-              {state.offers.length > 0 && (
+              {allProducts.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {(['orderbump', 'upsell', 'downsell'] as const).map(role => (
                     <Button key={role} variant="outline" size="sm" onClick={() => addFunnelOffer(role)} className="text-[10px] border-dashed h-9">

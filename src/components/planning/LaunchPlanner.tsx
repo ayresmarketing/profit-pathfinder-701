@@ -27,6 +27,9 @@ interface Lot {
   price: number;
   expectedSales: number;
   startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
 }
 
 interface LaunchFunnelOffer {

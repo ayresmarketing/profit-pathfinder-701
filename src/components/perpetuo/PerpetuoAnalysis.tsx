@@ -105,8 +105,8 @@ export default function PerpetuoAnalysis() {
     const costPerCheckout = checkouts > 0 ? trafficMetrics.investment / checkouts : Infinity;
     const projectedCPA = purchases > 0 ? trafficMetrics.investment / purchases : Infinity;
 
-    // Main product revenue
-    const mainSales = purchases;
+    // Main product revenue — floor purchases for consistency
+    const mainSales = Math.floor(purchases);
     const mainGrossRevenue = mainProd.price * mainSales;
     const mainNetRevenue = mainNetPerSale * mainSales;
 
@@ -386,7 +386,7 @@ export default function PerpetuoAnalysis() {
                   {formatBRL(funnelAnalysis.realNetProfit)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Base: CPA estimado de {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas
+                  Base: CPA estimado de {formatBRL(funnelAnalysis.projectedCPA)} × {formatNumber(funnelAnalysis.mainSales, 0)} vendas
                 </p>
               </div>
             </div>
@@ -394,7 +394,7 @@ export default function PerpetuoAnalysis() {
               <p className="text-xs text-muted-foreground">
                 💰 <span className="font-semibold text-foreground">Investimento necessário:</span>{' '}
                 <span className="font-mono font-bold text-primary">{formatBRL(funnelAnalysis.investmentNeeded)}</span>
-                <span className="ml-1">(CPA {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas)</span>
+                <span className="ml-1">(CPA {formatBRL(funnelAnalysis.projectedCPA)} × {formatNumber(funnelAnalysis.mainSales, 0)} vendas)</span>
               </p>
             </div>
           </motion.div>

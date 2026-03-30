@@ -225,15 +225,29 @@ export function calcCPAProjection(
   cpaMaxProduct: number,
   netValuePerSale: number
 ): CPAProjectionResult {
+  // Guard against division by zero
+  if (!traffic.investment || !traffic.cpm || !traffic.ctr || !traffic.connectRate || !traffic.pageToCheckout || !traffic.checkoutToPurchase) {
+    return {
+      impressions: 0, clicks: 0, cpc: 0, pageViews: 0, costPerPageView: 0,
+      checkouts: 0, costPerCheckout: 0, purchases: 0, projectedCPA: Infinity,
+      projectedProfit: 0, projectedProfitPerSale: 0, isViable: false,
+    };
+  }
+
+  // SEQUENTIAL funnel calculation — each step uses ONLY the previous step's result
+  // All percentages are converted to decimals (divided by 100) before multiplication
   const impressions = (traffic.investment / traffic.cpm) * 1000;
   const clicks = impressions * (traffic.ctr / 100);
-  const cpc = traffic.investment / clicks;
   const pageViews = clicks * (traffic.connectRate / 100);
-  const costPerPageView = traffic.investment / pageViews;
   const checkouts = pageViews * (traffic.pageToCheckout / 100);
-  const costPerCheckout = traffic.investment / checkouts;
   const purchases = checkouts * (traffic.checkoutToPurchase / 100);
-  const projectedCPA = traffic.investment / purchases;
+
+  // Cost per stage — all use raw (non-rounded) values for precision
+  const cpc = clicks > 0 ? traffic.investment / clicks : Infinity;
+  const costPerPageView = pageViews > 0 ? traffic.investment / pageViews : Infinity;
+  const costPerCheckout = checkouts > 0 ? traffic.investment / checkouts : Infinity;
+  const projectedCPA = purchases > 0 ? traffic.investment / purchases : Infinity;
+
   const projectedProfitPerSale = netValuePerSale - projectedCPA;
   const projectedProfit = projectedProfitPerSale * purchases;
   const isViable = projectedCPA <= cpaMaxProduct;
@@ -246,7 +260,7 @@ export function calcCPAProjection(
     costPerPageView,
     checkouts,
     costPerCheckout,
-    purchases: Math.floor(purchases),
+    purchases, // raw value — round only at display time
     projectedCPA,
     projectedProfit,
     projectedProfitPerSale,

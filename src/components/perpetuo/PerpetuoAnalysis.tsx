@@ -86,16 +86,23 @@ export default function PerpetuoAnalysis() {
 
     const mainNetPerSale = calcNetPerSale(mainProd);
 
-    // Traffic projection
+    // Guard against division by zero
+    if (!trafficMetrics.investment || !trafficMetrics.cpm || !trafficMetrics.ctr || !trafficMetrics.connectRate || !trafficMetrics.pageToCheckout || !trafficMetrics.checkoutToPurchase) {
+      return null;
+    }
+
+    // SEQUENTIAL funnel — each step uses ONLY the previous step's result
+    // All percentages converted to decimals (÷100) before multiplication
     const impressions = (trafficMetrics.investment / trafficMetrics.cpm) * 1000;
     const clicks = impressions * (trafficMetrics.ctr / 100);
-    const cpc = trafficMetrics.investment / clicks;
     const pageViews = clicks * (trafficMetrics.connectRate / 100);
-    const costPerPageView = trafficMetrics.investment / pageViews;
     const checkouts = pageViews * (trafficMetrics.pageToCheckout / 100);
-    const costPerCheckout = trafficMetrics.investment / checkouts;
-    const purchasesRaw = checkouts * (trafficMetrics.checkoutToPurchase / 100);
-    const purchases = Math.floor(purchasesRaw);
+    const purchases = checkouts * (trafficMetrics.checkoutToPurchase / 100);
+
+    // Cost per stage — raw values, no rounding during calculation
+    const cpc = clicks > 0 ? trafficMetrics.investment / clicks : Infinity;
+    const costPerPageView = pageViews > 0 ? trafficMetrics.investment / pageViews : Infinity;
+    const costPerCheckout = checkouts > 0 ? trafficMetrics.investment / checkouts : Infinity;
     const projectedCPA = purchases > 0 ? trafficMetrics.investment / purchases : Infinity;
 
     // Main product revenue

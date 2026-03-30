@@ -105,8 +105,8 @@ export default function PerpetuoAnalysis() {
     const costPerCheckout = checkouts > 0 ? trafficMetrics.investment / checkouts : Infinity;
     const projectedCPA = purchases > 0 ? trafficMetrics.investment / purchases : Infinity;
 
-    // Main product revenue
-    const mainSales = purchases;
+    // Main product revenue — floor purchases for consistency
+    const mainSales = Math.floor(purchases);
     const mainGrossRevenue = mainProd.price * mainSales;
     const mainNetRevenue = mainNetPerSale * mainSales;
 

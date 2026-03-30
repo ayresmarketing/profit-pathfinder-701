@@ -386,7 +386,7 @@ export default function PerpetuoAnalysis() {
                   {formatBRL(funnelAnalysis.realNetProfit)}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Base: CPA estimado de {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas
+                  Base: CPA estimado de {formatBRL(funnelAnalysis.projectedCPA)} × {formatNumber(funnelAnalysis.mainSales, 0)} vendas
                 </p>
               </div>
             </div>
@@ -394,7 +394,7 @@ export default function PerpetuoAnalysis() {
               <p className="text-xs text-muted-foreground">
                 💰 <span className="font-semibold text-foreground">Investimento necessário:</span>{' '}
                 <span className="font-mono font-bold text-primary">{formatBRL(funnelAnalysis.investmentNeeded)}</span>
-                <span className="ml-1">(CPA {formatBRL(funnelAnalysis.projectedCPA)} × {funnelAnalysis.mainSales} vendas)</span>
+                <span className="ml-1">(CPA {formatBRL(funnelAnalysis.projectedCPA)} × {formatNumber(funnelAnalysis.mainSales, 0)} vendas)</span>
               </p>
             </div>
           </motion.div>

@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('auth') === 'true';
+    return localStorage.getItem('auth') === 'true' || localStorage.getItem('rememberMe') === 'true';
   });
   const [userEmail, setUserEmail] = useState<string | null>(() => {
     return localStorage.getItem('authEmail');

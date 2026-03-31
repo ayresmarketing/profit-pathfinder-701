@@ -21,13 +21,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return localStorage.getItem('authEmail') || localStorage.getItem('rememberedEmail');
   });
 
-  const login = useCallback((email: string, password: string) => {
+  const login = useCallback((email: string, password: string, rememberMe?: boolean) => {
     const user = USERS.find(u => u.email === email.toLowerCase().trim() && u.password === password);
     if (user) {
       setIsAuthenticated(true);
       setUserEmail(user.email);
       localStorage.setItem('auth', 'true');
       localStorage.setItem('authEmail', user.email);
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('rememberedEmail', user.email);
+      }
       return true;
     }
     return false;

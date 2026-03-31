@@ -42,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserEmail(null);
     localStorage.removeItem('auth');
     localStorage.removeItem('authEmail');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('rememberedEmail');
   }, []);
 
   return (

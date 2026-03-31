@@ -17,7 +17,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     setTimeout(() => {
-      const ok = login(email, password);
+      const ok = login(email, password, rememberMe);
       if (!ok) setError('E-mail ou senha incorretos.');
       setLoading(false);
     }, 600);

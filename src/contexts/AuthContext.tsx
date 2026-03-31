@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return localStorage.getItem('auth') === 'true' || localStorage.getItem('rememberMe') === 'true';
   });
   const [userEmail, setUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('authEmail');
+    return localStorage.getItem('authEmail') || localStorage.getItem('rememberedEmail');
   });
 
   const login = useCallback((email: string, password: string) => {

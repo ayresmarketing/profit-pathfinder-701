@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 interface AuthContextValue {
   isAuthenticated: boolean;
   userEmail: string | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string, rememberMe?: boolean) => boolean;
   logout: () => void;
 }
 
@@ -15,19 +15,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('auth') === 'true';
+    return localStorage.getItem('auth') === 'true' || localStorage.getItem('rememberMe') === 'true';
   });
   const [userEmail, setUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('authEmail');
+    return localStorage.getItem('authEmail') || localStorage.getItem('rememberedEmail');
   });
 
-  const login = useCallback((email: string, password: string) => {
+  const login = useCallback((email: string, password: string, rememberMe?: boolean) => {
     const user = USERS.find(u => u.email === email.toLowerCase().trim() && u.password === password);
     if (user) {
       setIsAuthenticated(true);
       setUserEmail(user.email);
       localStorage.setItem('auth', 'true');
       localStorage.setItem('authEmail', user.email);
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('rememberedEmail', user.email);
+      }
       return true;
     }
     return false;
@@ -38,6 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserEmail(null);
     localStorage.removeItem('auth');
     localStorage.removeItem('authEmail');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('rememberedEmail');
   }, []);
 
   return (

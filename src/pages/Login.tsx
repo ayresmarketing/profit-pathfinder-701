@@ -10,13 +10,14 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     setTimeout(() => {
-      const ok = login(email, password);
+      const ok = login(email, password, rememberMe);
       if (!ok) setError('E-mail ou senha incorretos.');
       setLoading(false);
     }, 600);
@@ -82,6 +83,24 @@ export default function Login() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${rememberMe ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}
+              >
+                {rememberMe && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </button>
+              <label
+                onClick={() => setRememberMe(!rememberMe)}
+                className="text-xs text-muted-foreground cursor-pointer select-none"
+              >
+                Lembrar-me neste dispositivo
+              </label>
             </div>
 
             {error && (

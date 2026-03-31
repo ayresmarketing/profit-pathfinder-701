@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 interface AuthContextValue {
   isAuthenticated: boolean;
   userEmail: string | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string, rememberMe?: boolean) => boolean;
   logout: () => void;
 }
 

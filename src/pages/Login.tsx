@@ -85,6 +85,24 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${rememberMe ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}
+              >
+                {rememberMe && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </button>
+              <label
+                onClick={() => setRememberMe(!rememberMe)}
+                className="text-xs text-muted-foreground cursor-pointer select-none"
+              >
+                Lembrar-me neste dispositivo
+              </label>
+            </div>
+
             {error && (
               <motion.p
                 initial={{ opacity: 0, y: -4 }}

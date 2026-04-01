@@ -1,53 +1,47 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextValue {
-  isAuthenticated: boolean;
-  userEmail: string | null;
-  login: (email: string, password: string, rememberMe?: boolean) => boolean;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
 }
-
-const USERS = [
-  { email: 'ayresmarketingoficial@gmail.com', password: '12345' },
-];
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('auth') === 'true' || localStorage.getItem('rememberMe') === 'true';
-  });
-  const [userEmail, setUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('authEmail') || localStorage.getItem('rememberedEmail');
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback((email: string, password: string, rememberMe?: boolean) => {
-    const user = USERS.find(u => u.email === email.toLowerCase().trim() && u.password === password);
-    if (user) {
-      setIsAuthenticated(true);
-      setUserEmail(user.email);
-      localStorage.setItem('auth', 'true');
-      localStorage.setItem('authEmail', user.email);
-      if (rememberMe) {
-        localStorage.setItem('rememberMe', 'true');
-        localStorage.setItem('rememberedEmail', user.email);
-      }
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // THEN check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = useCallback(() => {
-    setIsAuthenticated(false);
-    setUserEmail(null);
-    localStorage.removeItem('auth');
-    localStorage.removeItem('authEmail');
-    localStorage.removeItem('rememberMe');
-    localStorage.removeItem('rememberedEmail');
-  }, []);
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userEmail, login, logout }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

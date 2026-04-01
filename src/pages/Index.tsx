@@ -6,7 +6,7 @@ import PerpetuoAnalysis from '@/components/perpetuo/PerpetuoAnalysis';
 import LaunchPlanner from '@/components/planning/LaunchPlanner';
 import ThemeToggle from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, BarChart3, Rocket, Menu, TrendingUp, LogOut } from 'lucide-react';
+import { Package, BarChart3, Rocket, Menu, TrendingUp, LogOut, User } from 'lucide-react';
 
 const tabs = [
   { id: 'cadastro', label: 'Cadastro', icon: Package, desc: 'Produtos & Taxas' },
@@ -25,8 +25,11 @@ const tabComponents: Record<TabId, React.FC> = {
 export default function Index() {
   const [activeTab, setActiveTab] = useState<TabId>('cadastro');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout, userEmail } = useAuth();
+  const { user, signOut } = useAuth();
   const ActiveComponent = tabComponents[activeTab];
+
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   return (
     <OperationProvider>
@@ -80,14 +83,21 @@ export default function Index() {
               <span className="tag-user text-[9px]">✏️ Editável</span>
               <span className="tag-auto text-[9px]">⚡ Calculado</span>
             </div>
-            {userEmail && (
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{userEmail}</span>
-                <button onClick={logout} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title="Sair">
-                  <LogOut className="h-3.5 w-3.5" />
-                </button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full shrink-0" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User className="h-3 w-3 text-primary" />
+                  </div>
+                )}
+                <span className="text-[10px] text-muted-foreground truncate">{displayName || user?.email}</span>
               </div>
-            )}
+              <button onClick={signOut} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title="Sair">
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </aside>
 

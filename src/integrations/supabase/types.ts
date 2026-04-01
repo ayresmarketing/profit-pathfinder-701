@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      funnel_products: {
+        Row: {
+          conversion_rate: number | null
+          created_at: string
+          funnel_id: string
+          id: string
+          product_id: string
+          role: string
+        }
+        Insert: {
+          conversion_rate?: number | null
+          created_at?: string
+          funnel_id: string
+          id?: string
+          product_id: string
+          role?: string
+        }
+        Update: {
+          conversion_rate?: number | null
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          product_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_products_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          checkout_conversion: number | null
+          created_at: string
+          ctr: number | null
+          daily_budget: number | null
+          days: number | null
+          estimated_cpa: number | null
+          id: string
+          lp_conversion: number | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkout_conversion?: number | null
+          created_at?: string
+          ctr?: number | null
+          daily_budget?: number | null
+          days?: number | null
+          estimated_cpa?: number | null
+          id?: string
+          lp_conversion?: number | null
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkout_conversion?: number | null
+          created_at?: string
+          ctr?: number | null
+          daily_budget?: number | null
+          days?: number | null
+          estimated_cpa?: number | null
+          id?: string
+          lp_conversion?: number | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          coproducer_percentage: number | null
+          created_at: string
+          id: string
+          name: string
+          other_costs: number | null
+          platform_fixed: number | null
+          platform_percentage: number | null
+          price: number
+          tax_percentage: number | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coproducer_percentage?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          other_costs?: number | null
+          platform_fixed?: number | null
+          platform_percentage?: number | null
+          price?: number
+          tax_percentage?: number | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coproducer_percentage?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          other_costs?: number | null
+          platform_fixed?: number | null
+          platform_percentage?: number | null
+          price?: number
+          tax_percentage?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          trial_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -40,6 +40,7 @@ interface LaunchFunnelOffer {
 
 interface LaunchFunnel {
   mainProductId: string;
+  conversionRate: number;
   offers: LaunchFunnelOffer[];
 }
 
@@ -54,8 +55,8 @@ export default function LaunchPlanner() {
   const [editingPhase, setEditingPhase] = useState<'before' | 'after'>('before');
   const [funnelCreated, setFunnelCreated] = useState(false);
 
-  const [beforePitch, setBeforePitch] = useState<LaunchFunnel>({ mainProductId: 'main', offers: [] });
-  const [afterPitch, setAfterPitch] = useState<LaunchFunnel>({ mainProductId: '', offers: [] });
+  const [beforePitch, setBeforePitch] = useState<LaunchFunnel>({ mainProductId: 'main', conversionRate: 100, offers: [] });
+  const [afterPitch, setAfterPitch] = useState<LaunchFunnel>({ mainProductId: '', conversionRate: 5, offers: [] });
 
   const [lots, setLots] = useState<Lot[]>([]);
   const [lotsEnabled, setLotsEnabled] = useState(false);
@@ -121,8 +122,7 @@ export default function LaunchPlanner() {
 
     // After pitch
     const afterProduct = getProduct(afterPitch.mainProductId);
-    const afterConvRate = 5;
-    const afterMainSales = Math.floor(ticketSales * (afterConvRate / 100));
+    const afterMainSales = Math.floor(ticketSales * (afterPitch.conversionRate / 100));
     const afterGrossMain = afterProduct ? afterProduct.price * afterMainSales : 0;
     const afterNetMain = afterProduct ? calcNet(afterProduct.price, afterProduct) * afterMainSales : 0;
 
@@ -468,6 +468,21 @@ export default function LaunchPlanner() {
                 </SelectContent>
               </Select>
             </div>
+
+            {editingPhase === 'after' && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Taxa de Conversão do Pitch</label>
+                <InputField
+                  label=""
+                  value={currentFunnel.conversionRate}
+                  suffix="%"
+                  step={0.5}
+                  onChange={(v) => setCurrentFunnel(prev => ({ ...prev, conversionRate: v }))}
+                  highlight
+                />
+                <p className="text-[10px] text-muted-foreground">% dos compradores do ingresso que compram o produto do pitch.</p>
+              </div>
+            )}
 
             {/* Offers */}
             <div className="space-y-3">

@@ -66,6 +66,7 @@ export default function LaunchPlanner() {
   });
 
   const [showDetail, setShowDetail] = useState({ before: false, after: false, lots: false });
+  const [goalRevenue, setGoalRevenue] = useState(50000);
 
   const handleTrafficChange = (key: string, value: number) => setTraffic(prev => ({ ...prev, [key]: value }));
 
@@ -159,12 +160,25 @@ export default function LaunchPlanner() {
       { name: 'Depois Pitch', bruto: afterGross, liquido: afterNet },
     ];
 
+    // Custo por etapa
+    const cpc = clicks > 0 ? traffic.investment / clicks : 0;
+    const costPerPageView = pageViews > 0 ? traffic.investment / pageViews : 0;
+    const costPerCheckout = checkouts > 0 ? traffic.investment / checkouts : 0;
+    const projectedCPA = purchases > 0 ? traffic.investment / purchases : 0;
+
+    // Simulator helpers
+    const revenuePerTicket = ticketSales > 0 ? totalGross / ticketSales : 0;
+    const netMargin = totalGross > 0 ? totalNet / totalGross : 0;
+
     return {
       purchases, ticketSales, ticketPrice, ticketGrossTotal, ticketNetTotal,
-      beforeGross, beforeNet, beforeTotalSales, beforeOfferCalcs,
+      beforeGross, beforeNet, beforeTotalSales, beforeOfferCalcs, mainProd,
       afterMainSales, afterGrossMain, afterNetMain, afterGross, afterNet, afterTotalSales, afterOfferCalcs, afterProduct,
       totalGross, totalNet, totalLiquid, totalAllSales, cpaMax,
       lotBreakdowns, revenueChart,
+      impressions, clicks, pageViews, checkouts,
+      cpc, costPerPageView, costPerCheckout, projectedCPA,
+      revenuePerTicket, netMargin,
     };
   }, [funnelCreated, beforePitch, afterPitch, lots, lotsEnabled, traffic, state.product, state.offers]);
 
@@ -439,6 +453,165 @@ export default function LaunchPlanner() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </motion.div>
+
+          {/* VENDAS & FATURAMENTO POR PRODUTO */}
+          <motion.div variants={fadeIn} className="section-card">
+            <h3 className="text-base font-bold text-foreground mb-5">🛒 Vendas & Faturamento por Produto</h3>
+
+            {/* Header */}
+            <div className="grid grid-cols-4 gap-3 px-3 mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Produto</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Vendas</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Fat. Bruto</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Fat. Líquido</span>
+            </div>
+
+            <div className="space-y-2">
+              {/* Before pitch — ingresso */}
+              {calc.mainProd && (
+                <div className="grid grid-cols-4 gap-3 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2.5 items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{calc.mainProd.name || 'Ingresso'}</p>
+                    <p className="text-[10px] text-primary font-bold uppercase">Ingresso</p>
+                  </div>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatNumber(calc.ticketSales, 0)}</p>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatBRL(calc.ticketGrossTotal)}</p>
+                  <p className="text-xs font-mono font-bold text-center" style={{ color: calc.ticketNetTotal >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>{formatBRL(calc.ticketNetTotal)}</p>
+                </div>
+              )}
+
+              {/* Before pitch — offers */}
+              {calc.beforeOfferCalcs.map((oc: any, i: number) => (
+                <div key={`before-${i}`} className="grid grid-cols-4 gap-3 rounded-lg bg-secondary/50 px-3 py-2.5 items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{oc.prod?.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{oc.role} · {oc.conversionRate}%</p>
+                  </div>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatNumber(oc.sales, 0)}</p>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatBRL(oc.grossTotal)}</p>
+                  <p className="text-xs font-mono font-bold text-center" style={{ color: oc.netTotal >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>{formatBRL(oc.netTotal)}</p>
+                </div>
+              ))}
+
+              {/* Separator */}
+              {calc.afterProduct && (
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 border-t border-dashed border-border" />
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Depois do Pitch</span>
+                  <div className="flex-1 border-t border-dashed border-border" />
+                </div>
+              )}
+
+              {/* After pitch — produto principal */}
+              {calc.afterProduct && (
+                <div className="grid grid-cols-4 gap-3 rounded-lg bg-secondary/60 border border-border px-3 py-2.5 items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{calc.afterProduct.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Pitch · {afterPitch.conversionRate}%</p>
+                  </div>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatNumber(calc.afterMainSales, 0)}</p>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatBRL(calc.afterGrossMain)}</p>
+                  <p className="text-xs font-mono font-bold text-center" style={{ color: calc.afterNetMain >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>{formatBRL(calc.afterNetMain)}</p>
+                </div>
+              )}
+
+              {/* After pitch — offers */}
+              {calc.afterOfferCalcs.map((oc: any, i: number) => (
+                <div key={`after-${i}`} className="grid grid-cols-4 gap-3 rounded-lg bg-secondary/50 px-3 py-2.5 items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{oc.prod?.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{oc.role} · {oc.conversionRate}%</p>
+                  </div>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatNumber(oc.sales, 0)}</p>
+                  <p className="text-xs font-mono font-bold text-foreground text-center">{formatBRL(oc.grossTotal)}</p>
+                  <p className="text-xs font-mono font-bold text-center" style={{ color: oc.netTotal >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>{formatBRL(oc.netTotal)}</p>
+                </div>
+              ))}
+
+              {/* Total row */}
+              <div className="grid grid-cols-4 gap-3 rounded-lg bg-foreground/5 border border-border px-3 py-2.5 items-center mt-1">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wide">Total</p>
+                <p className="text-xs font-mono font-bold text-foreground text-center">{formatNumber(calc.totalAllSales, 0)}</p>
+                <p className="text-xs font-mono font-bold text-foreground text-center">{formatBRL(calc.totalGross)}</p>
+                <p className="text-xs font-mono font-bold text-center" style={{ color: calc.totalNet >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>{formatBRL(calc.totalNet)}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* CUSTO POR ETAPA NO FUNIL */}
+          <motion.div variants={fadeIn} className="section-card">
+            <h3 className="text-base font-bold text-foreground mb-5">🔽 Custo por Etapa no Funil</h3>
+            <div className="space-y-3">
+              {[
+                { label: 'Cliques', value: calc.clicks, cost: calc.cpc, pct: 100 },
+                { label: 'Visualizações', value: calc.pageViews, cost: calc.costPerPageView, pct: calc.clicks > 0 ? (calc.pageViews / calc.clicks) * 100 : 0 },
+                { label: 'Checkouts', value: calc.checkouts, cost: calc.costPerCheckout, pct: calc.clicks > 0 ? (calc.checkouts / calc.clicks) * 100 : 0 },
+                { label: 'Ingressos Vendidos', value: calc.purchases, cost: calc.projectedCPA, pct: calc.clicks > 0 ? (calc.purchases / calc.clicks) * 100 : 0 },
+              ].map((stage, i, arr) => {
+                const widthPct = 100 - (i * (100 / (arr.length + 1)));
+                const isLast = i === arr.length - 1;
+                return (
+                  <div key={stage.label} style={{ width: `${widthPct}%` }} className="mx-auto">
+                    <div className={`rounded-xl px-5 py-3 flex items-center justify-between ${isLast ? 'text-white' : 'bg-secondary/70 text-foreground'}`}
+                      style={isLast ? { background: 'var(--gradient-primary)' } : {}}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">{stage.label}</span>
+                        <span className="text-sm font-mono font-bold">{formatNumber(stage.value, 0)}</span>
+                        {i > 0 && <span className="text-[10px] opacity-60">({stage.pct.toFixed(1)}% dos cliques)</span>}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-semibold opacity-70 uppercase">Custo/unid.</p>
+                        <p className="text-sm font-mono font-bold">{formatBRL(stage.cost)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 text-center">
+              Investimento total: {formatBRL(traffic.investment)} · {formatNumber(calc.impressions, 0)} impressões
+            </p>
+          </motion.div>
+
+          {/* SIMULADOR DE METAS */}
+          <motion.div variants={fadeIn} className="section-card">
+            <h3 className="text-base font-bold text-foreground mb-2">🎯 Simulador de Metas</h3>
+            <p className="text-xs text-muted-foreground mb-5">Informe o faturamento bruto que deseja atingir e veja quantas vendas de ingresso são necessárias.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              <InputField label="Meta de faturamento bruto" value={goalRevenue} onChange={setGoalRevenue} step={1000} prefix="R$" highlight />
+
+              {(() => {
+                const requiredTickets = calc.revenuePerTicket > 0 ? Math.ceil(goalRevenue / calc.revenuePerTicket) : 0;
+                const requiredInvestment = calc.projectedCPA * requiredTickets;
+                const netAtGoal = goalRevenue * calc.netMargin;
+                const profitAtGoal = netAtGoal - requiredInvestment;
+                return (
+                  <>
+                    <div className="space-y-3">
+                      <div className="rounded-xl bg-secondary/60 p-4 text-center">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Ingressos necessários</p>
+                        <p className="text-2xl font-mono font-bold text-foreground">{formatNumber(requiredTickets, 0)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">CPA projetado: {formatBRL(calc.projectedCPA)}</p>
+                      </div>
+                      <div className="rounded-xl bg-secondary/60 p-4 text-center">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Investimento necessário</p>
+                        <p className="text-lg font-mono font-bold text-foreground">{formatBRL(requiredInvestment)}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl p-5 text-center border-2" style={{ borderColor: profitAtGoal >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Lucro projetado</p>
+                      <p className="text-2xl font-mono font-bold" style={{ color: profitAtGoal >= 0 ? 'hsl(152,69%,45%)' : 'hsl(var(--destructive))' }}>
+                        {formatBRL(profitAtGoal)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-2">Fat. líquido: {formatBRL(netAtGoal)}</p>
+                      <p className="text-[10px] text-muted-foreground">Margem líquida: {(calc.netMargin * 100).toFixed(1)}%</p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </motion.div>
         </>
       )}

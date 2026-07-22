@@ -8,7 +8,7 @@ Este documento é para onboarding de um novo Claude Code neste projeto. Leia tud
 
 **Nome:** Anti-Prejuízo  
 **Repositório:** profit-pathfinder-701  
-**Deploy:** Netlify (auto-deploy a partir do branch `main` do GitHub — `ayresmarketing/profit-pathfinder-701`)  
+**Deploy:** Vercel (auto-deploy a partir do branch `main` do GitHub — `ayresmarketing/profit-pathfinder-701`)  
 **Usuário:** Samuel Ayres (samuel@ayresmarketing.com) — empreendedor digital, não técnico. Sempre comunica em português e em linguagem simples. Traduz os pedidos para implementações técnicas por conta própria sem pedir esclarecimentos desnecessários.
 
 **Propósito:** Simulador financeiro para empreendedores digitais calcularem lucratividade de funnels de tráfego pago antes de investir. Ajuda a calcular CPA máximo, ROI, ponto de equilíbrio e simular metas.
@@ -27,7 +27,7 @@ Este documento é para onboarding de um novo Claude Code neste projeto. Leia tud
 | Backend/Auth | Supabase (PostgreSQL + Auth) |
 | Estado | React Context (AuthContext + OperationContext) |
 | Forms | React Hook Form + Zod |
-| Deploy | Netlify |
+| Deploy | Vercel |
 | Package manager | npm |
 
 ---
@@ -61,11 +61,10 @@ src/
   lib/
     calculations.ts             # Engine de cálculos (calcMainProduct, calcFullFunnel, formatBRL, etc.)
 supabase/
-  config.toml                   # project_id = dbhmjzirzufvprfenwnb
-  migrations/                   # SQL de criação do schema
-public/
-  _redirects                    # Netlify SPA redirect (/* /index.html 200)
-netlify.toml                    # Config de build do Netlify
+  config.toml                   # project_id do projeto Supabase ativo
+  migrations/                   # SQL de criação do schema (histórico do projeto local)
+  RESTORE_SCHEMA.sql            # Script standalone para recriar o schema completo num Supabase novo
+vercel.json                     # Config de rewrite SPA da Vercel (/* -> /index.html)
 ```
 
 ---
@@ -97,6 +96,15 @@ netlify.toml                    # Config de build do Netlify
 ---
 
 ## Banco de dados Supabase
+
+> **Nota (2026-07-22):** o projeto Supabase original (`dbhmjzirzufvprfenwnb`) foi pausado
+> por falta de uso. O projeto foi/está sendo migrado para um Supabase novo, de propriedade
+> da empresa. O schema abaixo (tabelas, RLS, trigger) é o mesmo dos dois projetos — a versão
+> pronta para colar num Supabase novo está em `supabase/RESTORE_SCHEMA.sql`. Ao configurar
+> o projeto novo, atualize `supabase/config.toml` (project_id) e as env vars
+> `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PROJECT_ID`
+> (`.env.local` + Vercel) com os dados do projeto novo. O `project_id`/URL abaixo refletem
+> o projeto original e podem estar desatualizados.
 
 **Projeto:** `dbhmjzirzufvprfenwnb`  
 **URL:** `https://dbhmjzirzufvprfenwnb.supabase.co`
@@ -131,7 +139,7 @@ VITE_SUPABASE_PROJECT_ID=dbhmjzirzufvprfenwnb
 ```
 
 Ficam em `.env.local` (nunca no Git — `.gitignore` bloqueia `.env` e `.env.*`).  
-No Netlify ficam em **Site settings → Environment variables**.
+Na Vercel ficam em **Project Settings → Environment Variables**.
 
 ---
 
@@ -164,7 +172,7 @@ Copie o JSON acima para `.claude/settings.json` na raiz do projeto e reinicie o 
 
 ## Regras de trabalho (memória de feedback do usuário)
 
-1. **Sempre fazer `git commit` + `git push` ao terminar qualquer alteração.** O Netlify faz auto-deploy a partir do push no branch `main`.
+1. **Sempre fazer `git commit` + `git push` ao terminar qualquer alteração.** A Vercel faz auto-deploy a partir do push no branch `main`.
 2. **Quando uma alteração precisar de mudança no Supabase** (nova tabela, coluna, política RLS, trigger), já realize de uma vez usando a API de gerenciamento do Supabase com o access token — não espere o usuário pedir separado.
 3. **O usuário comunica em linguagem simples** — "coloca um botão pra X" significa implementar a feature completa com integração ao banco se necessário.
 4. **Não usar Google OAuth** — autenticação é somente e-mail/senha.
